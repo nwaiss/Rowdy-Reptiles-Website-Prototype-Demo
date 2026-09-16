@@ -1,0 +1,747 @@
+/*
+  Design system: broadcast-graphics energy, not a wall of it. Body copy stays
+  on a light, high-contrast surface for readability (WCAG AA); the "TV
+  scoreboard" treatment — dark panels, glowing digits, condensed display
+  type, tag-style banners, reptile-scale texture — is reserved for the
+  header, hero, and the line counter, the same way a real broadcast only
+  lights up the score bug, not the whole screen.
+
+  Two self-hosted display fonts, both SIL Open Font License (free to embed,
+  no licensing risk — unlike ripped "team" fonts from font-piracy sites,
+  which would contradict "no copyrighted or trademarked items"):
+  - Anton for the homepage wordmark ("Rowdy Reptiles") and all UI chrome
+    (nav, buttons, badges, the scoreboard) — ultra-bold condensed block
+    letter, matching the club's own game-day graphics. Meant to be loud.
+  - Graduate for every other heading (h1 default plus h2/h3) — a face drawn
+    for varsity/collegiate lettering. This has been tried, replaced, and
+    brought back once already (a detour through making every heading Anton,
+    then a detour through a rounded "Fredoka" font, both reverted) — leave
+    it as Graduate unless explicitly asked to change it again.
+  Body text stays in the system sans for legibility at small sizes.
+*/
+@font-face {
+  font-family: 'Anton';
+  src: url('fonts/Anton-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Graduate';
+  src: url('fonts/Graduate-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg: #f5f6fb;
+  --surface: #ffffff;
+  --surface-alt: #eef0fa;
+  /* Royal blue family (Gators-associated), replacing the old desaturated
+     near-black navy — kept dark enough at the -deep/base stops that white
+     text and the orange accent still read clearly on top; only -soft (used
+     as a hover tint, never a text background) goes lighter. */
+  --navy: #1e40c4;
+  --navy-deep: #0a1442;
+  --navy-soft: #3f5fe0;
+  --orange: #ef6a2c;
+  --orange-dark: #cf5620;
+  --amber: #ffb020;
+  --text: #1c2136;
+  --text-muted: #5b6178;
+  --border: #e2e4f0;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgba(20, 36, 82, 0.06), 0 8px 24px -12px rgba(20, 36, 82, 0.18);
+  --focus: #ef6a2c;
+  --font-display: 'Anton', 'Arial Narrow', -apple-system, sans-serif;
+  --font-title: 'Graduate', 'Anton', 'Arial Narrow', -apple-system, sans-serif;
+  /* Matches the `zoom` below (1 = off, set to 1.5 alongside zoom on desktop).
+     Needed anywhere `vh`/`vw` is used to size something exactly to the
+     viewport (the no-scroll Line Counter layout) — `zoom` and viewport
+     units don't cancel out on their own: zoom scales the *rendered* box on
+     top of a vh value that's already computed against the real, unzoomed
+     viewport, so the two compound instead of canceling. Divide any such
+     vh/vw term by this variable to correct for it. */
+  --zoom-factor: 1;
+}
+
+* { box-sizing: border-box; }
+
+/* Bumps every rem-based size (headings, body copy, buttons, the scoreboard)
+   up together instead of hand-tuning each one. */
+html { font-size: 18px; }
+@media (max-width: 600px) { html { font-size: 16px; } }
+/* Desktop only: a true browser-zoom-style scale-up (not just bigger fonts —
+   spacing, cards, the scoreboard, everything grows together) so the page
+   reads as immersive instead of a small island in a big window. Mobile
+   keeps its own natural fit; phones don't need this. */
+@media (min-width: 761px) {
+  html { zoom: 1.5; }
+  /* Custom properties need :root here, not html — :root is a pseudo-class
+     (specificity 0-1-0) which beats the plain type selector `html`
+     (0-0-1) even though this rule comes later, so `html { --zoom-factor:
+     1.5 }` was silently losing to the `:root { --zoom-factor: 1 }` default
+     above and doing nothing. Cost real debugging time to find; see the
+     --zoom-factor comment above for what this variable is for. */
+  :root { --zoom-factor: 1.5; }
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+  font-size: 1.1rem;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  background: var(--orange);
+  color: #fff;
+  padding: 10px 16px;
+  z-index: 1000;
+  border-radius: 0 0 8px 0;
+}
+.skip-link:focus { left: 0; top: 0; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+a { color: var(--orange-dark); text-decoration: none; }
+
+button, input {
+  font-family: inherit;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Header / nav (broadcast score-bug bar) ---------- */
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 24px;
+  background: var(--navy-deep);
+  border-bottom: 3px solid var(--orange);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-wrap: wrap;
+}
+.header-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-sm);
+  color: rgba(255,255,255,0.7);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.header-admin-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.header-admin-btn[aria-current="page"] { color: var(--navy-deep); background: var(--orange); border-color: var(--orange); }
+
+.brand {
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  transition: transform 0.12s ease;
+}
+.brand:hover { transform: scale(1.03); }
+.logo { height: 87px; width: auto; display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35)); }
+
+.nav-toggle {
+  display: none;
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.hamburger, .hamburger::before, .hamburger::after {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: #fff;
+  position: relative;
+}
+.hamburger::before, .hamburger::after { content: ''; position: absolute; }
+.hamburger::before { top: -6px; }
+.hamburger::after { top: 6px; }
+
+.site-nav {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  padding: 10px 16px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.tab-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.tab-btn[aria-current="page"] { color: var(--navy-deep); background: var(--orange); }
+
+@media (max-width: 760px) {
+  .nav-toggle { display: inline-flex; align-items: center; }
+  .site-nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    order: 3;
+    margin-top: 10px;
+    gap: 2px;
+  }
+  .site-nav.open { display: flex; }
+  .tab-btn { width: 100%; text-align: left; }
+}
+
+/* Narrow desktop (just above the hamburger breakpoint, e.g. a 1024px-wide
+   laptop window under the desktop zoom scale-up): the 5 nav items were
+   wrapping to 2 rows at default padding/font-size, roughly doubling the
+   header's real height. That's mostly a cosmetic non-issue elsewhere, but
+   it was the main reason the no-scroll Line Counter tab (#line.panel,
+   below) couldn't fit at this width — its available height is `100vh`
+   minus the header's actual height. Trim nav spacing slightly here so it
+   stays one row. */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .site-nav { gap: 0; }
+  .tab-btn { padding: 10px 10px; font-size: 1.05rem; }
+}
+
+/* ---------- Layout ---------- */
+main { padding: 0 0 64px; }
+.panel { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.hidden { display: none !important; }
+
+/* Graduate, uppercase, navy — the varsity/collegiate look. .jumbotron h1
+   below overrides just the homepage wordmark back to Anton with the loud
+   outlined treatment; every other heading (including h1 in any other
+   context, if one ever exists) stays Graduate. */
+h1, h2, h3 { color: var(--navy); letter-spacing: 0.02em; font-family: var(--font-title); font-weight: 400; text-transform: uppercase; }
+h1 { font-size: 4.2rem; margin: 0 0 10px; }
+h2 { font-size: 2.2rem; letter-spacing: 0.03em; margin: 0; }
+h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
+
+/* Top-level tab sections (not the nested .panel used inside the hero) get
+   breathing room below the sticky header. */
+.tab.panel { padding-top: 32px; }
+
+/* ---------- Jumbotron hero ---------- */
+/* Alligator-hide texture: a real generated Voronoi cell pattern (see
+   generate-gator-skin.js), not a CSS grid trick — irregular scale shapes
+   with a light rim and a dark navy seam between them, tiled across the
+   banner at low-ish alpha so it reads as texture under the headline. */
+.jumbotron {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--navy-deep) 0%, var(--navy) 100%);
+  padding: 84px 32px 68px;
+  margin-bottom: 40px;
+}
+.jumbotron::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  background-image: url('gator-skin.png');
+  background-repeat: repeat;
+  background-size: 340px 340px;
+}
+.jumbotron-inner { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+
+/* Angled tag banner, like the schedule callouts on the club's posters. */
+.kicker {
+  display: inline-block;
+  background: var(--orange);
+  transform: skewX(-10deg);
+  padding: 5px 14px;
+  margin: 0 0 14px;
+  box-shadow: 0 3px 0 var(--orange-dark);
+}
+.kicker span {
+  display: inline-block;
+  transform: skewX(10deg);
+  font-family: var(--font-display);
+  color: var(--navy-deep);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 1.05rem;
+}
+/* The "Rowdy Reptiles" wordmark: the full-strength version of the outlined
+   heading treatment above — same idea, four times the lean, since this is
+   the one place on the site meant to be the loudest. Colored fill,
+   contrasting stroke, drop shadow, forward lean is a generic
+   sports-graphics technique, not a copy of any specific team's artwork.
+   White fill keeps it legible on the dark banner; the orange stroke and
+   navy shadow are the club's own already-established colors. */
+.jumbotron h1 {
+  font-family: var(--font-display);
+  transform: skewX(-8deg);
+  color: #fff;
+  -webkit-text-stroke: 1.5px var(--orange);
+  text-stroke: 1.5px var(--orange);
+  text-shadow: 3px 3px 0 var(--navy-deep), 6px 6px 0 rgba(0,0,0,0.35);
+  paint-order: stroke fill;
+}
+.jumbotron .tagline { color: rgba(255,255,255,0.85); }
+.tagline { font-size: 1.4rem; margin: 0; font-weight: 600; }
+.hero-copy { max-width: 65ch; color: var(--text-muted); margin-top: 20px; font-size: 1.15rem; }
+
+.panel-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+/* Plain rounded rectangle — no corner notch. A clip-path cut looked good on
+   one big lone button, but the angle scales with each button's own size, so
+   a row of same-purpose buttons (admin tabs, the line-adjust row) ended up
+   with mismatched-looking "chopped corners" instead of one consistent
+   shape. The bottom-edge box-shadow on each variant still gives the
+   game-button "press" feel without that problem. */
+.btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 13px 24px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+/* Navy-on-orange (not white-on-orange) because orange doesn't clear WCAG AA
+   4.5:1 against white at button-text sizes; navy does. Hover inverts to
+   navy-bg/white-text, which stays comfortably above the threshold too. */
+.btn-accent { background: var(--orange); color: var(--navy-deep); box-shadow: 0 4px 0 var(--orange-dark); }
+.btn-accent:hover { background: var(--amber); }
+.btn-accent:active { box-shadow: 0 2px 0 var(--orange-dark); }
+
+/* A button with a small second line under the main label — e.g. showing
+   the actual @handle so it's visible without clicking through. */
+.btn-stacked { flex-direction: column; gap: 2px; line-height: 1.25; padding-top: 10px; padding-bottom: 10px; }
+.btn-stacked .btn-sub { font-size: 1em; letter-spacing: 0.01em; }
+/* Secondary action — solid navy, not a faint outline, so it still reads
+   clearly as a button against the light page background. */
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--navy); }
+.btn-ghost:hover { background: var(--surface-alt); }
+
+.social-links { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.card {
+  background: var(--surface);
+  color: var(--text);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border-top: 4px solid var(--orange);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(20,36,82,0.1), 0 14px 28px -12px rgba(20,36,82,0.25); }
+/* Square crop regardless of source orientation — portrait phone photos and
+   landscape ones both end up the same shape, so the grid stays flush
+   instead of some cards being taller than others. */
+.card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--radius-sm); }
+.card p { margin: 2px 0; }
+.card small { color: var(--text-muted); }
+
+.empty-state, .loading {
+  margin-top: 20px;
+  color: var(--text-muted);
+}
+.muted { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Line Counter reads as one big feature, not a list — center the whole
+   section instead of leaving the scoreboard stranded on the left. It's also
+   the one tab meant to be checked at a glance, not scrolled: sized to
+   exactly fill the space below the header (--header-h is measured in JS,
+   since the header's real height varies — mobile hamburger vs. desktop nav,
+   plus the desktop `zoom` scale-up) and laid out as a flex column so its
+   own content compresses to fit rather than overflowing. `body.no-scroll-tab`
+   is toggled by showTab() only while this tab is active — every other tab
+   scrolls normally. */
+#line.panel {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(6px, calc(2vh / var(--zoom-factor)), 24px);
+  padding-top: clamp(8px, calc(2.4vh / var(--zoom-factor)), 32px);
+  padding-bottom: clamp(8px, calc(2.4vh / var(--zoom-factor)), 32px);
+}
+#line.panel .muted { text-align: center; margin: 0; max-width: 60ch; margin-left: auto; margin-right: auto; }
+body.no-scroll-tab {
+  overflow: hidden;
+}
+body.no-scroll-tab main { padding-bottom: 0; }
+body.no-scroll-tab .site-footer { display: none; }
+body.no-scroll-tab #line.panel {
+  min-height: calc((100vh - var(--header-h, 100px)) / var(--zoom-factor));
+  min-height: calc((100dvh - var(--header-h, 100px)) / var(--zoom-factor));
+}
+
+/* ---------- Line rules ---------- */
+/* Heading centered like every other tab, but the rules themselves are
+   left-aligned prose inside a centered card — a centered paragraph of
+   multi-line rules would be much harder to read. */
+#line-rules.panel { text-align: center; }
+.rules-card {
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  padding: 32px clamp(20px, 5vw, 40px);
+  max-width: 700px;
+  margin: 28px auto 0;
+  text-align: left;
+}
+.rules-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.rules-list li {
+  position: relative;
+  padding-left: 26px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.rules-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 10px;
+  height: 10px;
+  background: var(--orange);
+  border-radius: 2px;
+}
+
+/* ---------- Line counter: live scoreboard panel ---------- */
+.scoreboard {
+  margin: 0 auto;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px),
+    var(--navy-deep);
+  border-radius: var(--radius);
+  padding: clamp(10px, calc(2.7vh / var(--zoom-factor)), 32px) clamp(20px, calc(4vw / var(--zoom-factor)), 36px) clamp(8px, calc(2vh / var(--zoom-factor)), 26px);
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 10px 30px -12px rgba(10, 19, 48, 0.5);
+}
+.scoreboard-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.line-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.line-badge.active { background: rgba(46, 204, 113, 0.18); color: #6be08a; }
+.line-badge.active::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6be08a;
+  box-shadow: 0 0 6px #6be08a;
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+.line-label { font-family: var(--font-display); color: #fff; letter-spacing: 0.03em; font-size: 1.1rem; text-align: right; text-transform: uppercase; }
+
+.line-count {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  /* Scales with available height, not just viewport width — this is the
+     one element most responsible for whether the Line Counter tab fits
+     without scrolling on a short screen. */
+  font-size: clamp(2.2rem, calc(8vh / var(--zoom-factor)), 7rem);
+  line-height: 1;
+  text-align: center;
+  color: var(--orange);
+  text-shadow: 0 0 12px rgba(239, 106, 44, 0.65), 0 0 32px rgba(239, 106, 44, 0.35);
+  margin: clamp(4px, calc(1.5vh / var(--zoom-factor)), 16px) 0 4px;
+}
+.line-count.flash { animation: count-flash 0.5s ease; }
+@keyframes count-flash {
+  0% { text-shadow: 0 0 12px rgba(239,106,44,0.65), 0 0 32px rgba(239,106,44,0.35); }
+  35% { color: #fff; text-shadow: 0 0 20px #fff, 0 0 48px rgba(239,106,44,0.85); }
+  100% { text-shadow: 0 0 12px rgba(239,106,44,0.65), 0 0 32px rgba(239,106,44,0.35); }
+}
+
+.scoreboard-caption {
+  display: block;
+  font-family: var(--font-display);
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.9rem;
+  text-align: center;
+}
+.scoreboard .muted { color: rgba(255,255,255,0.45); }
+/* Always the lowest line in the scoreboard, on its own row below the "in
+   line" caption and the (optional) band notice, so it never fights either
+   of them for horizontal space and is never clipped/covered. */
+.scoreboard-updated {
+  margin: 10px 0 0;
+  text-align: center;
+}
+
+/* ---------- Donate ---------- */
+#donate.panel { text-align: center; }
+#donate.panel .hero-copy { margin-left: auto; margin-right: auto; }
+.donate-card {
+  margin: 28px auto 0;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  padding: 36px;
+  max-width: 480px;
+}
+.donate-btn { width: 100%; justify-content: center; font-size: 1.3rem; padding: 18px 20px; }
+
+/* ---------- Forms ---------- */
+.stack-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 420px;
+  margin-top: 12px;
+}
+.stack-form label { font-weight: 600; font-size: 0.9rem; margin-top: 6px; color: var(--navy); }
+.stack-form input {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--navy-soft);
+  color: var(--text);
+  background: var(--surface);
+}
+.stack-form input:focus { border-color: var(--orange); }
+.stack-form button { margin-top: 12px; align-self: flex-start; }
+.form-error { color: #b8291f; font-weight: 600; }
+
+/* ---------- Admin ----------
+   Deliberately narrower and centered than the rest of the site — this is
+   used far more on phones than the public pages, so it gets a mobile-app
+   feel (one centered column) even when opened on a desktop browser. */
+/* #line.panel deliberately excluded — it sets its own padding-top (see the
+   no-scroll Line Counter rules above); this rule used to include it too,
+   which silently won the cascade tie and broke that custom sizing. */
+#admin.panel, #donate.panel, #socials.panel { padding-top: 32px; }
+/* Darker than the page background on purpose — the inactive white admin
+   tab buttons only had a faint border to read as clickable before, which
+   is a weak/hue-only cue. A visibly darker surface behind them makes the
+   white buttons pop by simple lightness contrast, which holds up for
+   colorblind users the same way it does for anyone else. */
+#adminLoggedIn {
+  max-width: 520px;
+  margin: 12px auto 0;
+  padding: 28px 24px 36px;
+  background: #dde3f2;
+  border-radius: var(--radius);
+  text-align: center;
+}
+#adminLoggedIn .stack-form { margin-left: auto; margin-right: auto; }
+#adminLoggedIn .stack-form button { align-self: center; }
+#adminLoggedIn h3 { margin: 20px 0 4px; }
+
+#adminLoggedOut { max-width: 420px; margin: 12px auto 0; text-align: center; }
+#adminLoggedOut .stack-form { margin-left: auto; margin-right: auto; }
+#adminLoggedOut .stack-form button { align-self: center; }
+
+.admin-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* Start-a-new-line card: its own tinted panel so it visually reads as a
+   distinct step, not just more page content. */
+.line-start-card {
+  background: #c7d2ef;
+  border: 1px solid var(--navy-soft);
+  border-radius: var(--radius);
+  padding: 20px 24px 24px;
+}
+
+/* Live line control: count/adjustment controls at the top, End This Line at
+   the very bottom, per the requested order. */
+.live-count-display {
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px),
+    var(--navy-deep);
+  border-radius: var(--radius);
+  padding: 22px 24px 18px;
+  margin-bottom: 20px;
+}
+.admin-line-count {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-size: 4rem;
+  line-height: 1;
+  color: var(--orange);
+  text-shadow: 0 0 12px rgba(239, 106, 44, 0.65), 0 0 32px rgba(239, 106, 44, 0.35);
+  margin: 10px 0 4px;
+}
+.admin-line-label { font-family: var(--font-display); color: #fff; text-transform: uppercase; letter-spacing: 0.03em; font-size: 1rem; }
+
+/* "Last band was given out" — a one-way milestone notice, separate from the
+   headcount itself. Amber so it reads as caution, not the danger-red of
+   ending the line entirely. */
+.band-notice {
+  color: var(--amber, #ffb020);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.85rem;
+  margin: 6px 0 0;
+}
+.scoreboard .band-notice { margin-top: 4px; }
+
+.line-quick-adjust { display: flex; justify-content: center; gap: 14px; margin-bottom: 20px; }
+.adjust-btn { background: var(--navy); color: #fff; box-shadow: 0 4px 0 var(--navy-deep); font-family: inherit; text-transform: none; letter-spacing: normal; }
+.adjust-btn:hover { background: var(--navy-soft); }
+.adjust-btn:active { box-shadow: 0 2px 0 var(--navy-deep); }
+.adjust-btn-lg { font-size: 1.4rem; font-weight: 800; padding: 14px 28px; min-width: 84px; }
+
+.line-bulk-adjust, .line-manual-set { margin-bottom: 20px; }
+.line-bulk-adjust label, .line-manual-set label { display: block; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
+.line-bulk-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.line-bulk-row select, .line-bulk-row input {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  width: 100px;
+  text-align: center;
+}
+
+.btn-danger { background: #c62828; color: #fff; box-shadow: 0 4px 0 #8f1d1d; }
+.btn-danger:hover { background: #a11f1f; }
+.btn-danger:active { box-shadow: 0 2px 0 #8f1d1d; }
+
+/* Caution, not destructive — visually between accent (go) and danger
+   (stop): amber instead of orange or red. */
+.btn-warning { background: #b45309; color: #fff; box-shadow: 0 4px 0 #7c3a05; }
+.btn-warning:hover { background: #92400a; }
+.btn-warning:active { box-shadow: 0 2px 0 #7c3a05; }
+
+.line-end-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* ---------- Footer ---------- */
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+.site-footer p { margin: 0; }
+
+/* ---------- Toasts ---------- */
+.toasts {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+}
+.toast {
+  background: var(--navy);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 14px rgba(20, 36, 82, 0.35);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  max-width: 320px;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: #1a7a3e; }
+.toast.error { background: #b8291f; }
+
+@media (max-width: 600px) {
+  h1 { font-size: 3rem; }
+  h2 { font-size: 1.9rem; }
+  .jumbotron { padding: 48px 20px 36px; }
+  main { padding: 0 0 56px; }
+  .panel { padding: 0 20px; }
+  .site-header { padding: 10px 16px; }
+  /* .line-count and .scoreboard padding are clamp()-based now (scale with
+     viewport height, which is what actually matters for fitting the Line
+     Counter tab on-screen without scrolling) — don't reintroduce fixed
+     overrides here or they'll defeat that on short phone screens. */
+  .donate-card { padding: 24px 20px 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .card, .line-badge.active::before, .line-count.flash { animation: none !important; transition: none !important; }
+}

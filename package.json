@@ -1,0 +1,13 @@
+{
+  "name": "rowdy-reptiles-website-prototype-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static, backend-free demo build of the Rowdy Reptiles site for review/approval. Everything under public/ is deployable as-is (e.g. to GitHub Pages) with no build step.",
+  "scripts": {
+    "serve": "npx --yes serve public",
+    "generate-gator-skin": "node scripts/generate-gator-skin.js"
+  },
+  "devDependencies": {
+    "pngjs": "^7.0.0"
+  }
+}
