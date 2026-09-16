@@ -20,10 +20,12 @@
   const MAX_LINE_COUNT = 2000;
   const MAX_LINE_DELTA = 500;
 
+  // No line is live until an admin starts one from the dashboard — matches
+  // how the real site behaves between games.
   const DEFAULT_LINE = Object.freeze({
-    active: true,
-    count: 82,
-    label: 'vs FSU',
+    active: false,
+    count: 0,
+    label: '',
     bandsOut: false,
     updatedAt: new Date().toISOString(),
   });
