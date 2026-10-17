@@ -9,7 +9,7 @@ adjusting/ending the line) persist to `localStorage` in your browser only; nothi
 sent anywhere.
 
 - Admin tab demo password: `rowdydemo` (shown on the login form itself)
-- Instagram feed: placeholder tiles, since there's no real Instagram token here
+- Pages: Line Rules (home, with the hero banner), Line Counter, and Admin
 
 ## Preview locally
 No build step — `public/` is the deployable site as-is.

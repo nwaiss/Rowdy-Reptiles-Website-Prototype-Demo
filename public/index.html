@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Rowdy Reptiles — UF Gators Hype Squad</title>
-  <meta name="description" content="Rowdy Reptiles is the official hype squad for the Florida Gators student section: live game-day line counts and socials." />
+  <meta name="description" content="Rowdy Reptiles is the official hype squad for the Florida Gators student section: line rules and live game-day line counts." />
   <link rel="icon" href="logo.png" />
   <!-- Preload the display fonts so the kicker/heading boxes don't resize
        (and visibly jump) once the fonts finish loading after a fallback
@@ -17,7 +17,7 @@
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
-    <a class="brand" href="#" data-tab="about">
+    <a class="brand" href="#" data-tab="line-rules">
       <img class="logo" src="logo.png" alt="Rowdy Reptiles logo" />
     </a>
     <a href="#admin" data-tab="admin" class="header-admin-btn">Admin</a>
@@ -26,16 +26,17 @@
       <span class="hamburger"></span>
     </button>
     <nav id="siteNav" class="site-nav">
-      <a href="#about" data-tab="about" class="tab-btn" aria-current="page">Home</a>
-      <a href="#socials" data-tab="socials" class="tab-btn">Socials</a>
-      <a href="#line-rules" data-tab="line-rules" class="tab-btn">Line Rules</a>
+      <a href="#" data-tab="line-rules" class="tab-btn" aria-current="page">Line Rules</a>
       <a href="#line" data-tab="line" class="tab-btn">Line Counter</a>
-      <a href="#donate" data-tab="donate" class="tab-btn">Donate</a>
     </nav>
   </header>
 
   <main id="main">
-    <section id="about" class="tab">
+    <!-- Home page: the hero banner with the line rules directly below it.
+         Socials and Donate tabs were removed at the club president's request
+         (Oct 2026); the separate Home and Line Rules tabs were merged into
+         this one so the site still opens on the big title, not just a list. -->
+    <section id="line-rules" class="tab">
       <div class="jumbotron">
         <div class="jumbotron-inner">
           <p class="kicker"><span>UF Gators Student Section</span></p>
@@ -44,33 +45,13 @@
         </div>
       </div>
       <div class="panel">
-        <p class="hero-copy">We're the reptiles who show up loud, proud, and a little rowdy for every game. Chomp along with us, and check the line counter before you head to the next home game.</p>
-      </div>
-    </section>
-
-    <section id="socials" class="tab panel hidden">
-      <div class="panel-head">
-        <h2>Socials</h2>
-        <div class="social-links" id="socialLinks"></div>
-      </div>
-      <div id="instagramFeed" class="grid" aria-live="polite">
-        <p class="loading">Loading posts…</p>
-      </div>
-    </section>
-
-    <section id="line-rules" class="tab panel hidden">
-      <h2>Line Rules</h2>
-      <div class="rules-card">
-        <ul class="rules-list">
-          <li>Line begins at Gate 3. Student tickets/bands are not accepted at any other gates.</li>
-          <li>Limit of 2 bands per person. 500–700 bands are distributed on a game-by-game basis. Bands guarantee entry, but not lower bowl seating.</li>
-          <li>Half of your party must remain in line at all times. Failure to do so during line checks may result in being removed from the line.</li>
-          <li>Bands are numbered, and entry is granted in numerical order.</li>
-          <li>Reselling of bands is strictly prohibited.</li>
-          <li>All camping equipment (chairs, tables, TVs, backpacks) must be removed from the line 2 hours before gates open.</li>
-          <li>Line checks will be administered in a timely manner. Final line checks will take place 1 hour before doors open.</li>
-          <li>Your whole group must be present for the final line check. Failure to do so will result in your group losing its spot in line.</li>
-        </ul>
+        <h2>Line Rules</h2>
+        <div class="rules-card">
+          <!-- Filled from /api/rules — admins edit these from the dashboard. -->
+          <ul id="rulesList" class="rules-list" aria-live="polite">
+            <li class="rules-loading">Loading rules…</li>
+          </ul>
+        </div>
       </div>
     </section>
 
@@ -88,14 +69,6 @@
       </div>
       <p class="muted">Updates automatically while this page is open.</p>
       <p class="muted">Only 500 wristbands are given out, even though the lower bowl seats 700 students — get here early to make sure you get one.</p>
-    </section>
-
-    <section id="donate" class="tab panel hidden">
-      <h2>Support Rowdy Reptiles</h2>
-      <p class="hero-copy">Donations help fund spirit gear, game-day supplies, and events that keep the student section loud. Thank you for backing the squad.</p>
-      <div id="donateCard" class="donate-card">
-        <p class="loading">Loading…</p>
-      </div>
     </section>
 
     <section id="admin" class="tab panel hidden">
@@ -116,66 +89,89 @@
           <button id="logoutBtn" class="btn adjust-btn">Log out</button>
         </div>
 
-        <div id="adminLine">
-          <!-- Only shown when no line is live. -->
-          <div id="lineStartCard" class="line-start-card">
-            <h3>Start a New Line</h3>
-            <form id="lineStartForm" class="stack-form">
-              <label for="lineLabelInput">Game / label</label>
-              <input id="lineLabelInput" maxlength="80" placeholder="vs. Georgia — Basketball" />
-              <label for="lineStartInput">Starting count</label>
-              <input id="lineStartInput" type="number" min="0" max="2000" value="0" />
-              <button type="submit" class="btn btn-accent">Start Line</button>
-            </form>
+        <!-- Main dashboard view. Hidden while the rule editor below is open. -->
+        <div id="adminMain">
+          <div id="adminLine">
+            <!-- Only shown when no line is live. -->
+            <div id="lineStartCard" class="line-start-card">
+              <h3>Start a New Line</h3>
+              <form id="lineStartForm" class="stack-form">
+                <label for="lineLabelInput">Game / label</label>
+                <input id="lineLabelInput" maxlength="80" placeholder="vs. Georgia — Basketball" />
+                <label for="lineStartInput">Starting count</label>
+                <input id="lineStartInput" type="number" min="0" max="2000" value="0" />
+                <button type="submit" class="btn btn-accent">Start Line</button>
+              </form>
+            </div>
+
+            <!-- Only shown while a line is live. End This Line must be used
+                 before Start a New Line becomes available again. -->
+            <div id="lineLiveControls" class="hidden">
+              <div class="live-count-display">
+                <span class="line-badge active">Live</span>
+                <div id="adminLineCount" class="admin-line-count">—</div>
+                <div id="adminLineLabelDisplay" class="admin-line-label"></div>
+                <p id="adminBandNotice" class="band-notice hidden">Last band was given out</p>
+              </div>
+
+              <div id="lineQuickAdjust" class="line-quick-adjust">
+                <button type="button" class="btn adjust-btn adjust-btn-lg" data-delta="-1" aria-label="Remove one">&minus;1</button>
+                <button type="button" class="btn adjust-btn adjust-btn-lg" data-delta="1" aria-label="Add one">+1</button>
+              </div>
+
+              <div class="line-bulk-adjust">
+                <label for="lineBulkAmount">Add or remove a group</label>
+                <div class="line-bulk-row">
+                  <button type="button" id="lineBulkRemove" class="btn adjust-btn">&minus; Remove</button>
+                  <select id="lineBulkAmount">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5" selected>5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <button type="button" id="lineBulkAdd" class="btn adjust-btn">+ Add</button>
+                </div>
+              </div>
+
+              <div class="line-manual-set">
+                <label for="lineSetInput">Set exact count</label>
+                <div class="line-bulk-row">
+                  <input id="lineSetInput" type="number" min="0" max="2000" placeholder="e.g. 120" />
+                  <button type="button" id="lineSetBtn" class="btn adjust-btn">Set</button>
+                </div>
+              </div>
+
+              <div class="line-end-actions">
+                <button id="noMoreBandsBtn" class="btn btn-warning">No More Bands</button>
+                <button id="stopLineBtn" class="btn btn-danger">End This Line</button>
+              </div>
+            </div>
           </div>
 
-          <!-- Only shown while a line is live. End This Line must be used
-               before Start a New Line becomes available again. -->
-          <div id="lineLiveControls" class="hidden">
-            <div class="live-count-display">
-              <span class="line-badge active">Live</span>
-              <div id="adminLineCount" class="admin-line-count">—</div>
-              <div id="adminLineLabelDisplay" class="admin-line-label"></div>
-              <p id="adminBandNotice" class="band-notice hidden">Last band was given out</p>
-            </div>
+          <div class="admin-rules-entry">
+            <h3>Line Rules</h3>
+            <p class="muted">Change the official rules shown on the home page.</p>
+            <button type="button" id="editRulesBtn" class="btn btn-accent">Edit Line Rules</button>
+          </div>
+        </div>
 
-            <div id="lineQuickAdjust" class="line-quick-adjust">
-              <button type="button" class="btn adjust-btn adjust-btn-lg" data-delta="-1" aria-label="Remove one">&minus;1</button>
-              <button type="button" class="btn adjust-btn adjust-btn-lg" data-delta="1" aria-label="Add one">+1</button>
-            </div>
-
-            <div class="line-bulk-adjust">
-              <label for="lineBulkAmount">Add or remove a group</label>
-              <div class="line-bulk-row">
-                <button type="button" id="lineBulkRemove" class="btn adjust-btn">&minus; Remove</button>
-                <select id="lineBulkAmount">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5" selected>5</option>
-                  <option value="6">6</option>
-                  <option value="7">7</option>
-                  <option value="8">8</option>
-                  <option value="9">9</option>
-                  <option value="10">10</option>
-                </select>
-                <button type="button" id="lineBulkAdd" class="btn adjust-btn">+ Add</button>
-              </div>
-            </div>
-
-            <div class="line-manual-set">
-              <label for="lineSetInput">Set exact count</label>
-              <div class="line-bulk-row">
-                <input id="lineSetInput" type="number" min="0" max="2000" placeholder="e.g. 120" />
-                <button type="button" id="lineSetBtn" class="btn adjust-btn">Set</button>
-              </div>
-            </div>
-
-            <div class="line-end-actions">
-              <button id="noMoreBandsBtn" class="btn btn-warning">No More Bands</button>
-              <button id="stopLineBtn" class="btn btn-danger">End This Line</button>
-            </div>
+        <!-- Rule editor. Opened from "Edit Line Rules" (after a confirm, in
+             case it was tapped by accident); saving asks once more, since
+             whatever is saved goes live as the official rules. -->
+        <div id="rulesEditor" class="rules-editor hidden">
+          <h3>Edit Line Rules</h3>
+          <p class="muted">Each box is one rule, shown on the home page in this order. Nothing changes on the site until you press Save.</p>
+          <ol id="rulesEditorList" class="rules-editor-list"></ol>
+          <button type="button" id="addRuleBtn" class="btn adjust-btn">+ Add a Rule</button>
+          <div class="rules-editor-actions">
+            <button type="button" id="cancelRulesBtn" class="btn adjust-btn">Cancel</button>
+            <button type="button" id="saveRulesBtn" class="btn btn-accent">Save Rules</button>
           </div>
         </div>
       </div>

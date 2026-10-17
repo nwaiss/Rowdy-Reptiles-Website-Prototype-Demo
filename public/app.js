@@ -1,25 +1,26 @@
 (function () {
   'use strict';
 
-  const state = { isAdmin: false, adminConfigured: true, config: null };
+  const state = { isAdmin: false, adminConfigured: true };
 
-  const VALID_TABS = ['about', 'socials', 'line-rules', 'line', 'donate', 'admin'];
+  // 'line-rules' is the home page (hero banner + line rules, merged).
+  const DEFAULT_TAB = 'line-rules';
+  const VALID_TABS = ['line-rules', 'line', 'admin'];
+  // Old links to tabs that were removed or merged (Home, Socials, Donate)
+  // land on the home page instead of being ignored.
+  const RETIRED_TABS = ['about', 'socials', 'donate'];
   // Demo build: GitHub Pages has no server to rewrite clean paths like
-  // /donate back to index.html, so routing lives in the hash instead
-  // (#donate). Returns null for a hash that isn't one of ours (e.g. the
+  // /admin back to index.html, so routing lives in the hash instead
+  // (#admin). Returns null for a hash that isn't one of ours (e.g. the
   // "Skip to content" link's #main) so the current tab is left alone.
   function tabFromHash(hash) {
     const clean = (hash || '').replace(/^#/, '');
-    if (clean === '') return 'about';
+    if (clean === '' || RETIRED_TABS.includes(clean)) return DEFAULT_TAB;
     return VALID_TABS.includes(clean) ? clean : null;
   }
 
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $all(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
-
-  function escapeHtml(s) {
-    return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
 
   function toast(message, kind) {
     const container = $('#toasts');
@@ -42,12 +43,12 @@
   }
 
   // ---------- Tabs / routing ----------
-  // Every tab is a real, bookmarkable URL (e.g. /donate, /admin) handled
+  // Every tab is a real, bookmarkable URL (e.g. /line, /admin) handled
   // client-side via pushState; the server just serves index.html for any
   // of these paths so a hard refresh or shared link lands on the right tab.
   function showTab(name, opts) {
     const options = opts || {};
-    if (!VALID_TABS.includes(name)) name = 'about';
+    if (!VALID_TABS.includes(name)) name = DEFAULT_TAB;
     $all('.tab').forEach((t) => t.classList.add('hidden'));
     const target = document.getElementById(name);
     if (target) target.classList.remove('hidden');
@@ -61,9 +62,12 @@
     // below the header (see #line.panel in styles.css) instead of scrolling.
     document.body.classList.toggle('no-scroll-tab', name === 'line');
 
-    const hash = name === 'about' ? '#' : `#${name}`;
+    const hash = name === DEFAULT_TAB ? '' : `#${name}`;
     if (options.push !== false && location.hash !== hash) {
-      history.pushState(null, '', hash);
+      history.pushState(null, '', hash || location.pathname);
+    } else if (options.push === false && hash === '' && location.hash) {
+      // Landed via a retired hash (#about, #socials, #donate) — clean it up.
+      history.replaceState(null, '', location.pathname);
     }
     if (name === 'admin') refreshAdminSession();
   }
@@ -104,74 +108,6 @@
     const open = nav.classList.toggle('open');
     $('#navToggle').setAttribute('aria-expanded', String(open));
   });
-
-  // ---------- Config-driven links (Instagram/GroupMe/Donate) ----------
-  async function loadConfig() {
-    try {
-      state.config = await api('/api/config');
-    } catch (e) {
-      state.config = { donateUrl: null, groupmeUrl: null, instagramProfileUrl: 'https://www.instagram.com/ufrowdies/' };
-    }
-    renderSocialLinks();
-    renderDonate();
-  }
-
-  // Pulls "@handle" out of an Instagram profile URL so it can be shown
-  // without anyone having to click through first.
-  function instagramHandle(url) {
-    try {
-      const handle = new URL(url).pathname.replace(/\//g, '');
-      return handle ? `@${handle}` : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function renderSocialLinks() {
-    const cfg = state.config || {};
-    const igUrl = cfg.instagramProfileUrl || 'https://www.instagram.com/ufrowdies/';
-    const handle = instagramHandle(igUrl);
-    const links = [`<a class="btn btn-accent btn-stacked" href="${escapeHtml(igUrl)}" target="_blank" rel="noopener noreferrer">
-      <span class="btn-label">Follow on Instagram</span>
-      ${handle ? `<span class="btn-sub">${escapeHtml(handle)}</span>` : ''}
-    </a>`];
-    if (cfg.groupmeUrl) {
-      links.push(`<a class="btn btn-ghost" href="${escapeHtml(cfg.groupmeUrl)}" target="_blank" rel="noopener noreferrer">Join our GroupMe</a>`);
-    }
-    $('#socialLinks').innerHTML = links.join('');
-  }
-
-  function renderDonate() {
-    const cfg = state.config || {};
-    const card = $('#donateCard');
-    if (cfg.donateUrl) {
-      card.innerHTML = `<a class="btn btn-accent donate-btn" href="${escapeHtml(cfg.donateUrl)}" target="_blank" rel="noopener noreferrer">Donate Now</a>`;
-    } else {
-      card.innerHTML = `<p class="empty-state">Online giving is coming soon — check back once our accounts are set up!</p>`;
-    }
-  }
-
-  // ---------- Instagram feed ----------
-  async function loadInstagram() {
-    const container = $('#instagramFeed');
-    try {
-      const j = await api('/api/instagram');
-      if (j.data && j.data.length) {
-        container.innerHTML = j.data.slice(0, 12).map((it) => `
-          <div class="card">
-            <a href="${escapeHtml(it.permalink)}" target="_blank" rel="noopener noreferrer">
-              <img src="${escapeHtml(it.media_url || it.thumbnail_url)}" alt="Instagram post" loading="lazy">
-            </a>
-            <p>${escapeHtml(it.caption || '')}</p>
-          </div>`).join('');
-      } else {
-        container.innerHTML = `<p class="empty-state">No live posts to show here yet — tap "Follow on Instagram" above.</p>`;
-      }
-      if (j.warning) container.innerHTML += `<p class="muted">${escapeHtml(j.warning)}</p>`;
-    } catch (e) {
-      container.innerHTML = `<p class="empty-state">Could not load Instagram right now.</p>`;
-    }
-  }
 
   // ---------- Line counter (public) ----------
   function formatUpdated(iso) {
@@ -215,6 +151,28 @@
     }
   }
 
+  // ---------- Line rules (public) ----------
+  // Rendered with textContent, never innerHTML — the rules are free text an
+  // admin typed, so they must show exactly as typed and never run as markup.
+  function renderRules(rules) {
+    const list = $('#rulesList');
+    list.replaceChildren(...rules.map((rule) => {
+      const li = document.createElement('li');
+      li.textContent = rule;
+      return li;
+    }));
+  }
+
+  async function loadRules() {
+    try {
+      const { rules } = await api('/api/rules');
+      state.rules = rules;
+      renderRules(rules);
+    } catch (e) {
+      $('#rulesList').innerHTML = '<li class="rules-loading">Could not load the line rules right now.</li>';
+    }
+  }
+
   // ---------- Admin: session ----------
   async function refreshAdminSession() {
     try {
@@ -255,6 +213,7 @@
   $('#logoutBtn').addEventListener('click', async () => {
     await api('/api/admin/logout', { method: 'POST' });
     state.isAdmin = false;
+    closeRulesEditor();
     refreshAdminSession();
     toast('Logged out.');
   });
@@ -322,11 +281,109 @@
     } catch (err) { toast(err.message, 'error'); }
   });
 
+  // ---------- Admin: line rules editor ----------
+  // Two deliberate speed bumps: a confirm before the editor opens (in case
+  // "Edit Line Rules" was tapped by accident) and a stronger one before
+  // saving, since whatever is saved goes live as the official rules.
+  function ruleEditorItem(text) {
+    const li = document.createElement('li');
+    li.className = 'rule-edit-item';
+    li.innerHTML = `
+      <div class="rule-edit-head">
+        <span class="rule-edit-num"></span>
+        <div class="rule-edit-tools">
+          <button type="button" class="rule-tool" data-action="up">&uarr; Up</button>
+          <button type="button" class="rule-tool" data-action="down">&darr; Down</button>
+          <button type="button" class="rule-tool rule-tool-remove" data-action="remove">Remove</button>
+        </div>
+      </div>
+      <textarea rows="3" maxlength="500"></textarea>`;
+    li.querySelector('textarea').value = text;
+    return li;
+  }
+
+  // Numbers each rule and disables Up on the first / Down on the last.
+  function refreshRuleEditor() {
+    const items = $all('.rule-edit-item', $('#rulesEditorList'));
+    items.forEach((li, i) => {
+      li.querySelector('.rule-edit-num').textContent = `Rule ${i + 1}`;
+      li.querySelector('textarea').setAttribute('aria-label', `Rule ${i + 1}`);
+      li.querySelector('[data-action="up"]').disabled = i === 0;
+      li.querySelector('[data-action="down"]').disabled = i === items.length - 1;
+    });
+  }
+
+  function editorRules() {
+    return $all('#rulesEditorList textarea').map((t) => t.value.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  }
+
+  function hasUnsavedRuleChanges() {
+    return JSON.stringify(editorRules()) !== JSON.stringify(state.rules || []);
+  }
+
+  function openRulesEditor() {
+    $('#rulesEditorList').replaceChildren(...(state.rules || []).map(ruleEditorItem));
+    refreshRuleEditor();
+    $('#adminMain').classList.add('hidden');
+    $('#rulesEditor').classList.remove('hidden');
+    window.scrollTo(0, 0);
+  }
+
+  function closeRulesEditor() {
+    $('#rulesEditor').classList.add('hidden');
+    $('#adminMain').classList.remove('hidden');
+    $('#rulesEditorList').replaceChildren();
+  }
+
+  $('#editRulesBtn').addEventListener('click', () => {
+    if (!confirm('Open the line rules editor?\n\nYou\'ll be able to change the official line rules shown on the home page.')) return;
+    openRulesEditor();
+  });
+
+  $('#rulesEditorList').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const li = btn.closest('.rule-edit-item');
+    if (btn.dataset.action === 'up' && li.previousElementSibling) li.parentNode.insertBefore(li, li.previousElementSibling);
+    if (btn.dataset.action === 'down' && li.nextElementSibling) li.parentNode.insertBefore(li.nextElementSibling, li);
+    if (btn.dataset.action === 'remove') li.remove();
+    refreshRuleEditor();
+  });
+
+  $('#addRuleBtn').addEventListener('click', () => {
+    const li = ruleEditorItem('');
+    $('#rulesEditorList').appendChild(li);
+    refreshRuleEditor();
+    li.querySelector('textarea').focus();
+  });
+
+  $('#cancelRulesBtn').addEventListener('click', () => {
+    if (hasUnsavedRuleChanges() && !confirm('Discard your changes? The line rules will stay exactly as they are now.')) return;
+    closeRulesEditor();
+  });
+
+  $('#saveRulesBtn').addEventListener('click', async () => {
+    const rules = editorRules();
+    if (!rules.length) { toast('Add at least one rule before saving.', 'error'); return; }
+    if (!hasUnsavedRuleChanges()) { toast('No changes to save.'); closeRulesEditor(); return; }
+    const warning = 'Publish these as the OFFICIAL line rules?\n\n'
+      + `Exactly what you typed (${rules.length} rule${rules.length === 1 ? '' : 's'}) will appear on the Rowdy Reptiles home page for everyone to see, replacing the current rules.\n\n`
+      + 'Double-check spelling and wording before you continue.';
+    if (!confirm(warning)) return;
+    try {
+      const saved = await api('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rules }) });
+      state.rules = saved.rules;
+      renderRules(saved.rules);
+      closeRulesEditor();
+      toast('Line rules updated.', 'success');
+    } catch (err) { toast(err.message, 'error'); }
+  });
+
   // ---------- Init ----------
   async function init() {
     updateHeaderHeightVar();
-    showTab(tabFromHash(location.hash) || 'about', { push: false });
-    await Promise.all([loadInstagram(), loadLine(), loadConfig(), refreshAdminSession()]);
+    showTab(tabFromHash(location.hash) || DEFAULT_TAB, { push: false });
+    await Promise.all([loadLine(), loadRules(), refreshAdminSession()]);
     updateHeaderHeightVar(); // logo/fonts may have finished loading and nudged the header's height
     setInterval(loadLine, 10000);
   }

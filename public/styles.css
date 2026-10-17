@@ -45,6 +45,11 @@
   --navy: #1e40c4;
   --navy-deep: #0a1442;
   --navy-soft: #3f5fe0;
+  /* Header bar only. UF's official Gator blue, chosen by the user over the
+     old near-black navy (which read as Auburn). --navy-deep stays
+     dark on purpose: it's also the scoreboard background and the text
+     color on orange, where it needs the extra contrast. */
+  --header-bg: #0021A5;
   --orange: #ef6a2c;
   --orange-dark: #cf5620;
   --amber: #ffb020;
@@ -137,7 +142,7 @@ button, input {
   align-items: center;
   gap: 12px;
   padding: 4px 24px;
-  background: var(--navy-deep);
+  background: var(--header-bg);
   border-bottom: 3px solid var(--orange);
   position: sticky;
   top: 0;
@@ -227,19 +232,6 @@ button, input {
   .tab-btn { width: 100%; text-align: left; }
 }
 
-/* Narrow desktop (just above the hamburger breakpoint, e.g. a 1024px-wide
-   laptop window under the desktop zoom scale-up): the 5 nav items were
-   wrapping to 2 rows at default padding/font-size, roughly doubling the
-   header's real height. That's mostly a cosmetic non-issue elsewhere, but
-   it was the main reason the no-scroll Line Counter tab (#line.panel,
-   below) couldn't fit at this width — its available height is `100vh`
-   minus the header's actual height. Trim nav spacing slightly here so it
-   stays one row. */
-@media (min-width: 761px) and (max-width: 1100px) {
-  .site-nav { gap: 0; }
-  .tab-btn { padding: 10px 10px; font-size: 1.05rem; }
-}
-
 /* ---------- Layout ---------- */
 main { padding: 0 0 64px; }
 .panel { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
@@ -316,17 +308,6 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 }
 .jumbotron .tagline { color: rgba(255,255,255,0.85); }
 .tagline { font-size: 1.4rem; margin: 0; font-weight: 600; }
-.hero-copy { max-width: 65ch; color: var(--text-muted); margin-top: 20px; font-size: 1.15rem; }
-
-.panel-head {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  text-align: center;
-  margin-bottom: 4px;
-}
 
 /* Plain rounded rectangle — no corner notch. A clip-path cut looked good on
    one big lone button, but the angle scales with each button's own size, so
@@ -357,47 +338,6 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 .btn-accent:hover { background: var(--amber); }
 .btn-accent:active { box-shadow: 0 2px 0 var(--orange-dark); }
 
-/* A button with a small second line under the main label — e.g. showing
-   the actual @handle so it's visible without clicking through. */
-.btn-stacked { flex-direction: column; gap: 2px; line-height: 1.25; padding-top: 10px; padding-bottom: 10px; }
-.btn-stacked .btn-sub { font-size: 1em; letter-spacing: 0.01em; }
-/* Secondary action — solid navy, not a faint outline, so it still reads
-   clearly as a button against the light page background. */
-.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--navy); }
-.btn-ghost:hover { background: var(--surface-alt); }
-
-.social-links { display: flex; gap: 10px; flex-wrap: wrap; }
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 16px;
-  margin-top: 20px;
-}
-.card {
-  background: var(--surface);
-  color: var(--text);
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  border-top: 4px solid var(--orange);
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(20,36,82,0.1), 0 14px 28px -12px rgba(20,36,82,0.25); }
-/* Square crop regardless of source orientation — portrait phone photos and
-   landscape ones both end up the same shape, so the grid stays flush
-   instead of some cards being taller than others. */
-.card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--radius-sm); }
-.card p { margin: 2px 0; }
-.card small { color: var(--text-muted); }
-
-.empty-state, .loading {
-  margin-top: 20px;
-  color: var(--text-muted);
-}
 .muted { color: var(--text-muted); font-size: 0.9rem; }
 
 /* Line Counter reads as one big feature, not a list — center the whole
@@ -430,10 +370,11 @@ body.no-scroll-tab #line.panel {
 }
 
 /* ---------- Line rules ---------- */
-/* Heading centered like every other tab, but the rules themselves are
-   left-aligned prose inside a centered card — a centered paragraph of
-   multi-line rules would be much harder to read. */
-#line-rules.panel { text-align: center; }
+/* Sits directly under the hero banner on the home tab. Heading centered
+   like every other tab, but the rules themselves are left-aligned prose
+   inside a centered card — a centered paragraph of multi-line rules would
+   be much harder to read. */
+#line-rules .panel { text-align: center; }
 .rules-card {
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -467,6 +408,9 @@ body.no-scroll-tab #line.panel {
   background: var(--orange);
   border-radius: 2px;
 }
+/* Placeholder/error line while the rules load — no bullet, muted. */
+.rules-list li.rules-loading { padding-left: 0; color: var(--text-muted); }
+.rules-list li.rules-loading::before { display: none; }
 
 /* ---------- Line counter: live scoreboard panel ---------- */
 .scoreboard {
@@ -546,19 +490,6 @@ body.no-scroll-tab #line.panel {
   text-align: center;
 }
 
-/* ---------- Donate ---------- */
-#donate.panel { text-align: center; }
-#donate.panel .hero-copy { margin-left: auto; margin-right: auto; }
-.donate-card {
-  margin: 28px auto 0;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  border-radius: var(--radius);
-  padding: 36px;
-  max-width: 480px;
-}
-.donate-btn { width: 100%; justify-content: center; font-size: 1.3rem; padding: 18px 20px; }
-
 /* ---------- Forms ---------- */
 .stack-form {
   display: flex;
@@ -586,7 +517,7 @@ body.no-scroll-tab #line.panel {
 /* #line.panel deliberately excluded — it sets its own padding-top (see the
    no-scroll Line Counter rules above); this rule used to include it too,
    which silently won the cascade tie and broke that custom sizing. */
-#admin.panel, #donate.panel, #socials.panel { padding-top: 32px; }
+#admin.panel { padding-top: 32px; }
 /* Darker than the page background on purpose — the inactive white admin
    tab buttons only had a faint border to read as clickable before, which
    is a weak/hue-only cue. A visibly darker surface behind them makes the
@@ -689,6 +620,72 @@ body.no-scroll-tab #line.panel {
 
 .line-end-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 
+/* "Edit Line Rules" entry point — set apart from the game-day line controls
+   above it with a divider, since it's an occasional task, not a live one. */
+.admin-rules-entry {
+  margin-top: 28px;
+  padding-top: 8px;
+  border-top: 2px solid rgba(10, 20, 66, 0.15);
+}
+.admin-rules-entry p { margin: 0 0 12px; }
+
+/* ---------- Admin: line rules editor ---------- */
+.rules-editor-list {
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+.rule-edit-item {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+.rule-edit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.rule-edit-num { font-family: var(--font-display); color: var(--navy); text-transform: uppercase; letter-spacing: 0.04em; }
+.rule-edit-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.rule-tool {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--navy-soft);
+  background: var(--surface);
+  color: var(--navy);
+  cursor: pointer;
+}
+.rule-tool:hover:not(:disabled) { background: var(--surface-alt); }
+.rule-tool:disabled { opacity: 0.35; cursor: default; }
+.rule-tool-remove { border-color: #c62828; color: #b8291f; }
+.rule-tool-remove:hover { background: #fdecea; }
+.rule-edit-item textarea {
+  display: block;
+  width: 100%;
+  min-height: 4.5em;
+  resize: vertical;
+  padding: 10px;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text);
+  border: 1.5px solid var(--navy-soft);
+  border-radius: var(--radius-sm);
+}
+.rule-edit-item textarea:focus { border-color: var(--orange); }
+.rules-editor-actions { display: flex; justify-content: center; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+
 /* ---------- Footer ---------- */
 .site-footer {
   display: flex;
@@ -739,9 +736,8 @@ body.no-scroll-tab #line.panel {
      viewport height, which is what actually matters for fitting the Line
      Counter tab on-screen without scrolling) — don't reintroduce fixed
      overrides here or they'll defeat that on short phone screens. */
-  .donate-card { padding: 24px 20px 20px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn, .card, .line-badge.active::before, .line-count.flash { animation: none !important; transition: none !important; }
+  .btn, .line-badge.active::before, .line-count.flash { animation: none !important; transition: none !important; }
 }
