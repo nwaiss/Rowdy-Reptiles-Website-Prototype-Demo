@@ -16,35 +16,45 @@
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <header class="site-header">
-    <a class="brand" href="#" data-tab="line-rules">
-      <img class="logo" src="logo.png" alt="Rowdy Reptiles logo" />
-    </a>
-    <a href="#admin" data-tab="admin" class="header-admin-btn">Admin</a>
-    <button id="navToggle" class="nav-toggle" aria-expanded="false" aria-controls="siteNav">
-      <span class="sr-only">Menu</span>
-      <span class="hamburger"></span>
-    </button>
-    <nav id="siteNav" class="site-nav">
-      <a href="#" data-tab="line-rules" class="tab-btn" aria-current="page">Line Rules</a>
-      <a href="#line" data-tab="line" class="tab-btn">Line Counter</a>
-    </nav>
-  </header>
-
   <main id="main">
-    <!-- Home page: the hero banner with the line rules directly below it.
-         Socials and Donate tabs were removed at the club president's request
-         (Oct 2026); the separate Home and Line Rules tabs were merged into
-         this one so the site still opens on the big title, not just a list. -->
-    <section id="line-rules" class="tab">
+    <!-- The whole public site is this one page: hero banner, then the live
+         line counter, then the line rules. There is no header or nav — the
+         only other view is the admin dashboard, reached from the footer. -->
+    <section id="home" class="tab">
       <div class="jumbotron">
         <div class="jumbotron-inner">
+          <!-- Kicker tag removed for now so the logo can take its space
+               (Oct 2026). Its styles are still in styles.css (.kicker) —
+               uncomment this line to bring the design back.
           <p class="kicker"><span>UF Gators Student Section</span></p>
-          <h1>Rowdy Reptiles</h1>
+          -->
+          <!-- Logo on the left, "Line Manager" in the old text-title style
+               on the right. Reads as "Rowdy Reptiles Line Manager". -->
+          <h1 class="hero-heading">
+            <img class="wordmark" src="logo-wordmark.png" alt="Rowdy Reptiles" width="1720" height="1194" />
+            <span class="hero-title">Line<br>Manager</span>
+          </h1>
           <p class="tagline">The official hype squad for the Florida Gators student section.</p>
         </div>
       </div>
-      <div class="panel">
+
+      <div id="lineCounter" class="panel home-section">
+        <h2>Game Line Counter</h2>
+        <div class="scoreboard">
+          <div class="scoreboard-top">
+            <span id="lineStatusBadge" class="line-badge">Checking…</span>
+            <div id="lineLabel" class="line-label"></div>
+          </div>
+          <div id="lineCount" class="line-count">—</div>
+          <span class="scoreboard-caption">in line</span>
+          <p id="lineBandNotice" class="band-notice hidden">Last band was given out</p>
+          <p id="lineUpdated" class="scoreboard-updated muted"></p>
+        </div>
+        <p class="muted">Updates automatically while this page is open.</p>
+        <p class="muted">Only 500 wristbands are given out, even though the lower bowl seats 700 students — get here early to make sure you get one.</p>
+      </div>
+
+      <div id="lineRules" class="panel home-section">
         <h2>Line Rules</h2>
         <div class="rules-card">
           <!-- Filled from /api/rules — admins edit these from the dashboard. -->
@@ -55,23 +65,8 @@
       </div>
     </section>
 
-    <section id="line" class="tab panel hidden">
-      <h2>Game Line Counter</h2>
-      <div class="scoreboard">
-        <div class="scoreboard-top">
-          <span id="lineStatusBadge" class="line-badge">Checking…</span>
-          <div id="lineLabel" class="line-label"></div>
-        </div>
-        <div id="lineCount" class="line-count">—</div>
-        <span class="scoreboard-caption">in line</span>
-        <p id="lineBandNotice" class="band-notice hidden">Last band was given out</p>
-        <p id="lineUpdated" class="scoreboard-updated muted"></p>
-      </div>
-      <p class="muted">Updates automatically while this page is open.</p>
-      <p class="muted">Only 500 wristbands are given out, even though the lower bowl seats 700 students — get here early to make sure you get one.</p>
-    </section>
-
     <section id="admin" class="tab panel hidden">
+      <a href="#" data-tab="home" class="back-link">&larr; Back to site</a>
       <div id="adminLoggedOut">
         <h2>Admin Login</h2>
         <form id="loginForm" class="stack-form" autocomplete="off">
@@ -180,6 +175,7 @@
 
   <footer class="site-footer">
     <p>&copy; 2026 Rowdy Reptiles — UF Gators student section hype squad.</p>
+    <a href="#admin" data-tab="admin" class="footer-admin-btn">Admin</a>
   </footer>
 
   <div id="toasts" class="toasts" aria-live="polite"></div>

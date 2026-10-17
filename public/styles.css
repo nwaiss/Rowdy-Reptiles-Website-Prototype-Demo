@@ -3,16 +3,18 @@
   on a light, high-contrast surface for readability (WCAG AA); the "TV
   scoreboard" treatment — dark panels, glowing digits, condensed display
   type, tag-style banners, reptile-scale texture — is reserved for the
-  header, hero, and the line counter, the same way a real broadcast only
+  hero and the line counter, the same way a real broadcast only
   lights up the score bug, not the whole screen.
 
   Two self-hosted display fonts, both SIL Open Font License (free to embed,
   no licensing risk — unlike ripped "team" fonts from font-piracy sites,
   which would contradict "no copyrighted or trademarked items"):
-  - Anton for the homepage wordmark ("Rowdy Reptiles") and all UI chrome
-    (nav, buttons, badges, the scoreboard) — ultra-bold condensed block
-    letter, matching the club's own game-day graphics. Meant to be loud.
-  - Graduate for every other heading (h1 default plus h2/h3) — a face drawn
+  - Anton for the homepage "Line Manager" title, the home page's section
+    headings (a toned-down version of that title's style, as the user
+    asked in Oct 2026), and all UI chrome (buttons, badges, the scoreboard)
+    — ultra-bold condensed block letter, matching the club's own game-day
+    graphics. Meant to be loud.
+  - Graduate for every other heading (the admin dashboard's h2/h3) — a face drawn
     for varsity/collegiate lettering. This has been tried, replaced, and
     brought back once already (a detour through making every heading Anton,
     then a detour through a rounded "Fredoka" font, both reverted) — leave
@@ -45,11 +47,6 @@
   --navy: #1e40c4;
   --navy-deep: #0a1442;
   --navy-soft: #3f5fe0;
-  /* Header bar only. UF's official Gator blue, chosen by the user over the
-     old near-black navy (which read as Auburn). --navy-deep stays
-     dark on purpose: it's also the scoreboard background and the text
-     color on orange, where it needs the extra contrast. */
-  --header-bg: #0021A5;
   --orange: #ef6a2c;
   --orange-dark: #cf5620;
   --amber: #ffb020;
@@ -62,13 +59,9 @@
   --focus: #ef6a2c;
   --font-display: 'Anton', 'Arial Narrow', -apple-system, sans-serif;
   --font-title: 'Graduate', 'Anton', 'Arial Narrow', -apple-system, sans-serif;
-  /* Matches the `zoom` below (1 = off, set to 1.5 alongside zoom on desktop).
-     Needed anywhere `vh`/`vw` is used to size something exactly to the
-     viewport (the no-scroll Line Counter layout) — `zoom` and viewport
-     units don't cancel out on their own: zoom scales the *rendered* box on
-     top of a vh value that's already computed against the real, unzoomed
-     viewport, so the two compound instead of canceling. Divide any such
-     vh/vw term by this variable to correct for it. */
+  /* Matches the desktop `zoom` below (1 = off). `zoom` and `vh` units
+     compound instead of canceling (under zoom 1.5, a 50vh box renders 75%
+     of the screen), so every vh-based size divides by this. */
   --zoom-factor: 1;
 }
 
@@ -81,15 +74,12 @@ html { font-size: 18px; }
 /* Desktop only: a true browser-zoom-style scale-up (not just bigger fonts —
    spacing, cards, the scoreboard, everything grows together) so the page
    reads as immersive instead of a small island in a big window. Mobile
-   keeps its own natural fit; phones don't need this. */
+   keeps its own natural fit; phones don't need this. Any vh/vw size must
+   divide by --zoom-factor (see :root above). */
 @media (min-width: 761px) {
   html { zoom: 1.5; }
-  /* Custom properties need :root here, not html — :root is a pseudo-class
-     (specificity 0-1-0) which beats the plain type selector `html`
-     (0-0-1) even though this rule comes later, so `html { --zoom-factor:
-     1.5 }` was silently losing to the `:root { --zoom-factor: 1 }` default
-     above and doing nothing. Cost real debugging time to find; see the
-     --zoom-factor comment above for what this variable is for. */
+  /* :root, not html — :root (specificity 0-1-0) would otherwise beat
+     `html { --zoom-factor }` (0-0-1) and silently keep it at 1. */
   :root { --zoom-factor: 1.5; }
 }
 
@@ -136,119 +126,30 @@ button, input {
   outline-offset: 2px;
 }
 
-/* ---------- Header / nav (broadcast score-bug bar) ---------- */
-.site-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 24px;
-  background: var(--header-bg);
-  border-bottom: 3px solid var(--orange);
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  flex-wrap: wrap;
-}
-.header-admin-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: var(--radius-sm);
-  color: rgba(255,255,255,0.7);
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.header-admin-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
-.header-admin-btn[aria-current="page"] { color: var(--navy-deep); background: var(--orange); border-color: var(--orange); }
-
-.brand {
-  display: flex;
-  align-items: center;
-  padding: 2px 4px;
-  border-radius: var(--radius-sm);
-  transition: transform 0.12s ease;
-}
-.brand:hover { transform: scale(1.03); }
-.logo { height: 87px; width: auto; display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35)); }
-
-.nav-toggle {
-  display: none;
-  margin-left: auto;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  cursor: pointer;
-}
-.hamburger, .hamburger::before, .hamburger::after {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: #fff;
-  position: relative;
-}
-.hamburger::before, .hamburger::after { content: ''; position: absolute; }
-.hamburger::before { top: -6px; }
-.hamburger::after { top: 6px; }
-
-.site-nav {
-  margin-left: auto;
-  display: flex;
-  gap: 2px;
-  flex-wrap: wrap;
-}
-.tab-btn {
-  background: transparent;
-  border: none;
-  color: rgba(255,255,255,0.75);
-  padding: 10px 16px;
-  cursor: pointer;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border-radius: var(--radius-sm);
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.tab-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
-.tab-btn[aria-current="page"] { color: var(--navy-deep); background: var(--orange); }
-
-@media (max-width: 760px) {
-  .nav-toggle { display: inline-flex; align-items: center; }
-  .site-nav {
-    display: none;
-    width: 100%;
-    flex-direction: column;
-    order: 3;
-    margin-top: 10px;
-    gap: 2px;
-  }
-  .site-nav.open { display: flex; }
-  .tab-btn { width: 100%; text-align: left; }
-}
-
 /* ---------- Layout ---------- */
 main { padding: 0 0 64px; }
 .panel { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 .hidden { display: none !important; }
 
-/* Graduate, uppercase, navy — the varsity/collegiate look. .jumbotron h1
-   below overrides just the homepage wordmark back to Anton with the loud
-   outlined treatment; every other heading (including h1 in any other
-   context, if one ever exists) stays Graduate. */
+/* Graduate, uppercase, navy — the varsity/collegiate look. The homepage
+   h1 is the club's logo plus an Anton title instead (see .hero-heading). */
 h1, h2, h3 { color: var(--navy); letter-spacing: 0.02em; font-family: var(--font-title); font-weight: 400; text-transform: uppercase; }
 h1 { font-size: 4.2rem; margin: 0 0 10px; }
 h2 { font-size: 2.2rem; letter-spacing: 0.03em; margin: 0; }
 h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 
-/* Top-level tab sections (not the nested .panel used inside the hero) get
-   breathing room below the sticky header. */
+/* Top-level views that are a .panel themselves (the admin dashboard) get
+   breathing room at the top of the page. */
 .tab.panel { padding-top: 32px; }
+
+/* ---------- First screen: hero + line counter ----------
+   On load (desktop and phone alike) the hero fills the top half of the
+   screen and the line counter the bottom half; the rules start below the
+   fold. Both use min-height, so on a very short screen they grow rather
+   than clip. svh (the screen height with the mobile address bar showing)
+   keeps the split steady as the bar hides on scroll; the vh line is the
+   fallback for older browsers. Sizes inside both halves scale with screen
+   height through clamp() so they fit a short laptop screen too. */
 
 /* ---------- Jumbotron hero ---------- */
 /* Alligator-hide texture: a real generated Voronoi cell pattern (see
@@ -259,8 +160,13 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   position: relative;
   overflow: hidden;
   background: linear-gradient(160deg, var(--navy-deep) 0%, var(--navy) 100%);
-  padding: 84px 32px 68px;
-  margin-bottom: 40px;
+  min-height: calc(50vh / var(--zoom-factor));
+  min-height: calc(50svh / var(--zoom-factor));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: clamp(16px, calc(4svh / var(--zoom-factor)), 48px) 24px;
 }
 .jumbotron::before {
   content: '';
@@ -270,15 +176,17 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   background-repeat: repeat;
   background-size: 340px 340px;
 }
-.jumbotron-inner { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+.jumbotron-inner { position: relative; z-index: 1; max-width: 1200px; width: 100%; }
 
-/* Angled tag banner, like the schedule callouts on the club's posters. */
+/* Angled tag banner, like the schedule callouts on the club's posters.
+   Currently unused — its markup is commented out in index.html so the logo
+   can be bigger. Kept so the design can be restored by uncommenting it. */
 .kicker {
   display: inline-block;
   background: var(--orange);
   transform: skewX(-10deg);
   padding: 5px 14px;
-  margin: 0 0 14px;
+  margin: 0 0 clamp(8px, calc(2svh / var(--zoom-factor)), 16px);
   box-shadow: 0 3px 0 var(--orange-dark);
 }
 .kicker span {
@@ -290,15 +198,41 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   letter-spacing: 0.1em;
   font-size: 1.05rem;
 }
-/* The "Rowdy Reptiles" wordmark: the full-strength version of the outlined
-   heading treatment above — same idea, four times the lean, since this is
-   the one place on the site meant to be the loudest. Colored fill,
-   contrasting stroke, drop shadow, forward lean is a generic
-   sports-graphics technique, not a copy of any specific team's artwork.
-   White fill keeps it legible on the dark banner; the orange stroke and
-   navy shadow are the club's own already-established colors. */
-.jumbotron h1 {
+/* Hero heading: the club logo on the left and "LINE MANAGER" on the
+   right, side by side and centered as a pair. Both are sized off one
+   variable, --mark-h: the logo is that tall, and the two-line title is set
+   so its two lines add up to about the same height, so they read as one
+   matched lockup. --mark-h fills the space the (now commented-out) kicker
+   tag used to take, and shrinks on short screens so the hero still fits
+   its half. If the kicker comes back, drop it to 18svh / 6.5rem (mobile:
+   see the 600px media query). */
+.hero-heading {
+  --mark-h: clamp(4.5rem, calc(26svh / var(--zoom-factor)), 9.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--mark-h) * 0.18);
+  margin: 0 0 clamp(8px, calc(2svh / var(--zoom-factor)), 18px);
+}
+/* The club's own logo (logo-wordmark.png, a trimmed high-res crop of
+   Images/logo.png). Its white outline is part of the artwork, which is
+   what keeps it readable on the blue. */
+.wordmark {
+  display: block;
+  height: var(--mark-h);
+  width: auto;
+  flex: none;
+  filter: drop-shadow(3px 4px 0 rgba(10, 20, 66, 0.55));
+}
+/* The old "ROWDY REPTILES" text-title treatment, now on "LINE MANAGER":
+   Anton, white fill, orange outline, forward lean, stacked navy/black drop
+   shadow — a generic sports-graphics technique in the club's own colors. */
+.hero-title {
   font-family: var(--font-display);
+  font-size: calc(var(--mark-h) * 0.5);
+  line-height: 0.95;
+  text-align: left;
+  letter-spacing: 0.02em;
   transform: skewX(-8deg);
   color: #fff;
   -webkit-text-stroke: 1.5px var(--orange);
@@ -307,7 +241,7 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   paint-order: stroke fill;
 }
 .jumbotron .tagline { color: rgba(255,255,255,0.85); }
-.tagline { font-size: 1.4rem; margin: 0; font-weight: 600; }
+.tagline { font-size: clamp(1rem, calc(3.2svh / var(--zoom-factor)), 1.4rem); line-height: 1.4; margin: 0; font-weight: 600; }
 
 /* Plain rounded rectangle — no corner notch. A clip-path cut looked good on
    one big lone button, but the angle scales with each button's own size, so
@@ -340,48 +274,52 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 
 .muted { color: var(--text-muted); font-size: 0.9rem; }
 
-/* Line Counter reads as one big feature, not a list — center the whole
-   section instead of leaving the scoreboard stranded on the left. It's also
-   the one tab meant to be checked at a glance, not scrolled: sized to
-   exactly fill the space below the header (--header-h is measured in JS,
-   since the header's real height varies — mobile hamburger vs. desktop nav,
-   plus the desktop `zoom` scale-up) and laid out as a flex column so its
-   own content compresses to fit rather than overflowing. `body.no-scroll-tab`
-   is toggled by showTab() only while this tab is active — every other tab
-   scrolls normally. */
-#line.panel {
-  text-align: center;
+/* ---------- Home page sections ---------- */
+/* The public site is one page: hero, then the line counter, then the line
+   rules, each a centered .home-section with its own heading. */
+.home-section { text-align: center; }
+.home-section + .home-section { margin-top: 64px; }
+/* Section headings ("Game Line Counter", "Line Rules"): a quiet echo of
+   the hero's "LINE MANAGER" title — same Anton face, but one flat color,
+   no lean, no outline or shadow, so they don't compete with the hero.
+   (A skewed version with an orange shadow was tried and judged too loud.) */
+.home-section h2 {
+  margin-bottom: 24px;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--navy);
+}
+/* Bottom half of the first screen (see "First screen" above). */
+#lineCounter {
+  min-height: calc(50vh / var(--zoom-factor));
+  min-height: calc(50svh / var(--zoom-factor));
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: clamp(6px, calc(2vh / var(--zoom-factor)), 24px);
-  padding-top: clamp(8px, calc(2.4vh / var(--zoom-factor)), 32px);
-  padding-bottom: clamp(8px, calc(2.4vh / var(--zoom-factor)), 32px);
+  padding-top: clamp(10px, calc(2.5svh / var(--zoom-factor)), 32px);
+  padding-bottom: clamp(10px, calc(2.5svh / var(--zoom-factor)), 32px);
 }
-#line.panel .muted { text-align: center; margin: 0; max-width: 60ch; margin-left: auto; margin-right: auto; }
-body.no-scroll-tab {
-  overflow: hidden;
+/* Both section headings share the same size and gap below them, so
+   "Line Rules" matches "Game Line Counter". */
+#lineCounter h2, #lineRules h2 {
+  font-size: clamp(1.4rem, calc(4.5svh / var(--zoom-factor)), 2.2rem);
+  line-height: 1.2;
+  margin-bottom: clamp(8px, calc(2svh / var(--zoom-factor)), 24px);
 }
-body.no-scroll-tab main { padding-bottom: 0; }
-body.no-scroll-tab .site-footer { display: none; }
-body.no-scroll-tab #line.panel {
-  min-height: calc((100vh - var(--header-h, 100px)) / var(--zoom-factor));
-  min-height: calc((100dvh - var(--header-h, 100px)) / var(--zoom-factor));
-}
+#lineCounter .muted { margin: clamp(2px, calc(0.8svh / var(--zoom-factor)), 10px) auto 0; max-width: 60ch; line-height: 1.35; font-size: 0.85rem; }
 
 /* ---------- Line rules ---------- */
-/* Sits directly under the hero banner on the home tab. Heading centered
-   like every other tab, but the rules themselves are left-aligned prose
-   inside a centered card — a centered paragraph of multi-line rules would
-   be much harder to read. */
-#line-rules .panel { text-align: center; }
+/* Last section of the home page, below the line counter. Heading
+   centered, but the rules themselves are left-aligned prose inside a
+   centered card — a centered paragraph of multi-line rules would be much
+   harder to read. */
 .rules-card {
   background: var(--surface);
   box-shadow: var(--shadow);
   border-radius: var(--radius);
   padding: 32px clamp(20px, 5vw, 40px);
-  max-width: 700px;
-  margin: 28px auto 0;
+  max-width: 480px; /* same width as the scoreboard above, so the sections line up */
+  margin: 0 auto;
   text-align: left;
 }
 .rules-list {
@@ -415,11 +353,12 @@ body.no-scroll-tab #line.panel {
 /* ---------- Line counter: live scoreboard panel ---------- */
 .scoreboard {
   margin: 0 auto;
+  line-height: 1.3; /* tight, so the whole board fits the bottom half */
   background:
     repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px),
     var(--navy-deep);
   border-radius: var(--radius);
-  padding: clamp(10px, calc(2.7vh / var(--zoom-factor)), 32px) clamp(20px, calc(4vw / var(--zoom-factor)), 36px) clamp(8px, calc(2vh / var(--zoom-factor)), 26px);
+  padding: clamp(10px, calc(2.5svh / var(--zoom-factor)), 28px) 32px clamp(8px, calc(2svh / var(--zoom-factor)), 22px);
   max-width: 480px;
   width: 100%;
   box-shadow: 0 10px 30px -12px rgba(10, 19, 48, 0.5);
@@ -455,15 +394,12 @@ body.no-scroll-tab #line.panel {
 .line-count {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  /* Scales with available height, not just viewport width — this is the
-     one element most responsible for whether the Line Counter tab fits
-     without scrolling on a short screen. */
-  font-size: clamp(2.2rem, calc(8vh / var(--zoom-factor)), 7rem);
+  font-size: clamp(2.5rem, calc(9svh / var(--zoom-factor)), 6rem);
   line-height: 1;
   text-align: center;
   color: var(--orange);
   text-shadow: 0 0 12px rgba(239, 106, 44, 0.65), 0 0 32px rgba(239, 106, 44, 0.35);
-  margin: clamp(4px, calc(1.5vh / var(--zoom-factor)), 16px) 0 4px;
+  margin: clamp(4px, calc(1.2svh / var(--zoom-factor)), 14px) 0 4px;
 }
 .line-count.flash { animation: count-flash 0.5s ease; }
 @keyframes count-flash {
@@ -486,7 +422,7 @@ body.no-scroll-tab #line.panel {
    line" caption and the (optional) band notice, so it never fights either
    of them for horizontal space and is never clipped/covered. */
 .scoreboard-updated {
-  margin: 10px 0 0;
+  margin: 4px 0 0;
   text-align: center;
 }
 
@@ -514,10 +450,14 @@ body.no-scroll-tab #line.panel {
    Deliberately narrower and centered than the rest of the site — this is
    used far more on phones than the public pages, so it gets a mobile-app
    feel (one centered column) even when opened on a desktop browser. */
-/* #line.panel deliberately excluded — it sets its own padding-top (see the
-   no-scroll Line Counter rules above); this rule used to include it too,
-   which silently won the cascade tie and broke that custom sizing. */
-#admin.panel { padding-top: 32px; }
+/* With no site header, this link is the way back to the public page. */
+.back-link {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.back-link:hover { text-decoration: underline; }
 /* Darker than the page background on purpose — the inactive white admin
    tab buttons only had a faint border to read as clickable before, which
    is a weak/hue-only cue. A visibly darker surface behind them makes the
@@ -588,7 +528,7 @@ body.no-scroll-tab #line.panel {
   font-size: 0.85rem;
   margin: 6px 0 0;
 }
-.scoreboard .band-notice { margin-top: 4px; }
+.scoreboard .band-notice { margin-top: 2px; }
 
 .line-quick-adjust { display: flex; justify-content: center; gap: 14px; margin-bottom: 20px; }
 .adjust-btn { background: var(--navy); color: #fff; box-shadow: 0 4px 0 var(--navy-deep); font-family: inherit; text-transform: none; letter-spacing: normal; }
@@ -699,6 +639,19 @@ body.no-scroll-tab #line.panel {
   flex-wrap: wrap;
 }
 .site-footer p { margin: 0; }
+/* The only way into the admin dashboard — deliberately low-key, since it's
+   for officers, not the students the page is for. */
+.footer-admin-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--navy);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background-color 0.15s ease;
+}
+.footer-admin-btn:hover { background: var(--surface-alt); }
 
 /* ---------- Toasts ---------- */
 .toasts {
@@ -728,14 +681,13 @@ body.no-scroll-tab #line.panel {
 @media (max-width: 600px) {
   h1 { font-size: 3rem; }
   h2 { font-size: 1.9rem; }
-  .jumbotron { padding: 48px 20px 36px; }
+  .jumbotron { padding-left: 20px; padding-right: 20px; }
+  /* Smaller than desktop so logo + title fit side by side on a phone. */
+  .hero-heading { --mark-h: clamp(4rem, 16svh, 5.75rem); }
   main { padding: 0 0 56px; }
   .panel { padding: 0 20px; }
-  .site-header { padding: 10px 16px; }
-  /* .line-count and .scoreboard padding are clamp()-based now (scale with
-     viewport height, which is what actually matters for fitting the Line
-     Counter tab on-screen without scrolling) — don't reintroduce fixed
-     overrides here or they'll defeat that on short phone screens. */
+  .line-count { font-size: clamp(2.5rem, 9svh, 4.5rem); }
+  .scoreboard { padding-left: 20px; padding-right: 20px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

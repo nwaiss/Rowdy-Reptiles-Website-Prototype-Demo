@@ -3,12 +3,15 @@
 
   const state = { isAdmin: false, adminConfigured: true };
 
-  // 'line-rules' is the home page (hero banner + line rules, merged).
-  const DEFAULT_TAB = 'line-rules';
-  const VALID_TABS = ['line-rules', 'line', 'admin'];
-  // Old links to tabs that were removed or merged (Home, Socials, Donate)
-  // land on the home page instead of being ignored.
-  const RETIRED_TABS = ['about', 'socials', 'donate'];
+  // The public site is one page ('home': hero, line counter, line rules);
+  // the only other view is the admin dashboard.
+  const DEFAULT_TAB = 'home';
+  const VALID_TABS = ['home', 'admin'];
+  // Old links to tabs that were removed or merged into the home page land
+  // there instead of being ignored. The ones that became a section of the
+  // home page also scroll to that section.
+  const RETIRED_TABS = ['about', 'socials', 'donate', 'line', 'line-rules'];
+  const RETIRED_TAB_SECTIONS = { line: 'lineCounter', 'line-rules': 'lineRules' };
   // Demo build: GitHub Pages has no server to rewrite clean paths like
   // /admin back to index.html, so routing lives in the hash instead
   // (#admin). Returns null for a hash that isn't one of ours (e.g. the
@@ -43,9 +46,6 @@
   }
 
   // ---------- Tabs / routing ----------
-  // Every tab is a real, bookmarkable URL (e.g. /line, /admin) handled
-  // client-side via pushState; the server just serves index.html for any
-  // of these paths so a hard refresh or shared link lands on the right tab.
   function showTab(name, opts) {
     const options = opts || {};
     if (!VALID_TABS.includes(name)) name = DEFAULT_TAB;
@@ -55,38 +55,18 @@
     window.scrollTo(0, 0);
     $all('[data-tab]').forEach((b) => b.removeAttribute('aria-current'));
     $all(`[data-tab="${name}"]`).forEach((b) => b.setAttribute('aria-current', 'page'));
-    $('#siteNav').classList.remove('open');
-    $('#navToggle').setAttribute('aria-expanded', 'false');
-    // The Line Counter is meant to be a one-glance display, not a page you
-    // scroll — CSS uses this to size that tab to exactly fill the space
-    // below the header (see #line.panel in styles.css) instead of scrolling.
-    document.body.classList.toggle('no-scroll-tab', name === 'line');
 
     const hash = name === DEFAULT_TAB ? '' : `#${name}`;
     if (options.push !== false && location.hash !== hash) {
       history.pushState(null, '', hash || location.pathname);
     } else if (options.push === false && hash === '' && location.hash) {
-      // Landed via a retired hash (#about, #socials, #donate) — clean it up.
+      // Landed via a retired hash (#about, #line, ...) — clean it up, and
+      // jump to the matching home-page section if there is one.
+      const section = RETIRED_TAB_SECTIONS[location.hash.replace(/^#/, '')];
       history.replaceState(null, '', location.pathname);
+      if (section) document.getElementById(section).scrollIntoView();
     }
     if (name === 'admin') refreshAdminSession();
-  }
-
-  // Keeps --header-h in sync with the header's real rendered height (it
-  // changes at the mobile hamburger breakpoint, and reading the actual box
-  // is more reliable than guessing a constant — especially with the
-  // desktop `zoom` scale-up in play).
-  function updateHeaderHeightVar() {
-    const header = $('.site-header');
-    // getBoundingClientRect(), not offsetHeight — under the desktop `zoom`
-    // scale-up they disagree (offsetHeight reports the pre-zoom size), and
-    // it's the real rendered height (matching how `vh` resolves) that this
-    // needs to line up with.
-    if (header) document.documentElement.style.setProperty('--header-h', `${header.getBoundingClientRect().height}px`);
-  }
-  window.addEventListener('resize', updateHeaderHeightVar);
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(updateHeaderHeightVar);
   }
 
   document.addEventListener('click', (e) => {
@@ -103,11 +83,6 @@
   window.addEventListener('popstate', handleHashNav);
   window.addEventListener('hashchange', handleHashNav);
 
-  $('#navToggle').addEventListener('click', () => {
-    const nav = $('#siteNav');
-    const open = nav.classList.toggle('open');
-    $('#navToggle').setAttribute('aria-expanded', String(open));
-  });
 
   // ---------- Line counter (public) ----------
   function formatUpdated(iso) {
@@ -381,10 +356,8 @@
 
   // ---------- Init ----------
   async function init() {
-    updateHeaderHeightVar();
     showTab(tabFromHash(location.hash) || DEFAULT_TAB, { push: false });
     await Promise.all([loadLine(), loadRules(), refreshAdminSession()]);
-    updateHeaderHeightVar(); // logo/fonts may have finished loading and nudged the header's height
     setInterval(loadLine, 10000);
   }
 

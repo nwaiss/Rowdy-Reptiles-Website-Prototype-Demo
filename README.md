@@ -9,7 +9,7 @@ adjusting/ending the line) persist to `localStorage` in your browser only; nothi
 sent anywhere.
 
 - Admin tab demo password: `rowdydemo` (shown on the login form itself)
-- Pages: Line Rules (home, with the hero banner), Line Counter, and Admin
+- One public page (hero, live line counter, line rules), plus an Admin dashboard linked from the footer
 
 ## Preview locally
 No build step — `public/` is the deployable site as-is.
