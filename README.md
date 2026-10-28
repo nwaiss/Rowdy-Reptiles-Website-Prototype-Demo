@@ -14,7 +14,9 @@ anywhere.
   **`rowdydemo`**, also shown on the login form.
 - **Things to try:**
   - start a line and type an extra count;
-  - watch the simulated Google Sheet add a group every ~20 seconds;
+  - use the **Simulated Google Sheet** panel at the bottom of the dashboard
+    (demo only) to set how many students are "on the sheet", and choose
+    whether a random group also joins every 20 seconds;
   - press No More Bands;
   - switch to the stadium count (orange) and type the admitted total;
   - press Capacity Reached;
@@ -28,7 +30,8 @@ Differences from the real site, on purpose:
 - The real site has no Admin link; its dashboard lives at a secret URL behind a
   hashed password.
 - The real site reads the base count from the club's private Google Sheet. Here the
-  sheet is simulated.
+  sheet is simulated, and the demo-only panel at the bottom of the dashboard
+  controls it.
 - The real site keeps state on its server, so every visitor sees the same thing.
 
 ## Preview locally
