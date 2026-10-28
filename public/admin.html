@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <title>Admin — Rowdy Reptiles</title>
+  <link rel="icon" href="logo.png" />
+  <link rel="preload" href="fonts/Anton-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Graduate-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- DEMO BUILD: same dashboard as the real site, but every API call is
+       answered in the browser by mock-api.js (saved in localStorage). -->
+  <!--
+    Admin dashboard. (On the real site it's served only at a secret URL;
+    in this demo it's admin.html, linked from the footer.)
+    Shows one of two views: #adminLoggedOut (login form) or #adminLoggedIn
+    (line control + rules). admin.js switches between them.
+  -->
+  <main id="main">
+    <section id="admin" class="tab panel">
+      <a href="./" class="back-link">&larr; Back to site</a>
+
+      <div id="adminLoggedOut" class="hidden">
+        <h2>Admin Login</h2>
+        <form id="loginForm" class="stack-form">
+          <label for="adminPassword">Password</label>
+          <input id="adminPassword" name="password" type="password" autocomplete="current-password" maxlength="256" required />
+          <button type="submit" class="btn btn-accent">Log in</button>
+          <p id="loginError" class="form-error hidden" role="alert"></p>
+          <p class="muted">Demo build: the password is <strong>rowdydemo</strong>. It's checked in your browser only; nothing is sent anywhere.</p>
+        </form>
+      </div>
+
+      <div id="adminLoggedIn" class="hidden">
+        <div class="admin-header">
+          <h2>Admin Dashboard</h2>
+          <button type="button" id="logoutBtn" class="btn adjust-btn">Log out</button>
+        </div>
+
+        <!-- Main dashboard view. Hidden while the rule editor is open. -->
+        <div id="adminMain">
+          <p id="sheetStatus" class="sheet-status" role="status"></p>
+          <p class="muted demo-note">Demo: the Google Sheet is simulated. After you start a line, a new group joins about every 20 seconds.</p>
+
+          <!-- Exactly one of #lineStartCard / #lineLiveControls is shown,
+               depending on whether a line is live. -->
+          <div id="lineStartCard" class="line-start-card">
+            <h3>Start a New Line</h3>
+            <form id="lineStartForm" class="stack-form">
+              <label for="lineLabelInput">Game / label</label>
+              <input id="lineLabelInput" maxlength="80" placeholder="vs. Georgia — Basketball" />
+              <label for="lineExtraStartInput">Extra people to add (optional)</label>
+              <input id="lineExtraStartInput" type="number" inputmode="numeric" min="-2000" max="2000" step="1" value="0" />
+              <button type="submit" class="btn btn-accent">Start Line</button>
+            </form>
+          </div>
+
+          <!-- A live line is in one of two modes (see lib/line-store.js):
+               line count (navy) or stadium count (orange, doors open).
+               admin.js shows the controls for the current mode. -->
+          <div id="lineLiveControls" class="hidden">
+            <div id="adminLiveDisplay" class="live-count-display">
+              <span class="line-badge active">Live</span>
+              <div id="adminLineCount" class="admin-line-count" aria-live="polite">—</div>
+              <div id="adminLineLabelDisplay" class="admin-line-label"></div>
+              <p id="adminCountBreakdown" class="count-breakdown"></p>
+              <p id="adminBandNotice" class="band-notice hidden">Last band was given out</p>
+              <p id="adminCapacityNotice" class="capacity-notice hidden">Capacity reached</p>
+            </div>
+
+            <!-- Line count mode. Typing one number is the main way in. -->
+            <div id="lineModeControls">
+              <form id="extraSetForm" class="extra-set">
+                <label for="extraSetInput">Extra count (added on top of the sheet)</label>
+                <div class="input-row">
+                  <input id="extraSetInput" type="number" inputmode="numeric" min="-2000" max="2000" step="1" placeholder="e.g. 37" required />
+                  <button type="submit" class="btn adjust-btn">Set</button>
+                </div>
+              </form>
+
+              <p class="muted adjust-help">Small corrections:</p>
+              <div id="lineQuickAdjust" class="line-quick-adjust">
+                <button type="button" class="btn adjust-btn adjust-btn-lg" data-delta="-1" aria-label="Subtract one">&minus;1</button>
+                <button type="button" class="btn adjust-btn adjust-btn-lg" data-delta="1" aria-label="Add one">+1</button>
+              </div>
+            </div>
+
+            <!-- Stadium count mode. The number is typed in only (no +/−). -->
+            <div id="admittedModeControls" class="hidden">
+              <form id="admittedSetForm" class="extra-set">
+                <label for="admittedSetInput">Students admitted (total inside the stadium)</label>
+                <div class="input-row">
+                  <input id="admittedSetInput" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 412" required />
+                  <button type="submit" class="btn adjust-btn">Set</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="line-end-actions">
+              <button type="button" id="noMoreBandsBtn" class="btn btn-warning">No More Bands</button>
+              <button type="button" id="capacityReachedBtn" class="btn btn-warning hidden">Capacity Reached</button>
+              <button type="button" id="stopLineBtn" class="btn btn-danger">End This Line</button>
+            </div>
+
+            <!-- Bottom of the line section, just above Line Rules: switches
+                 what the public counter shows. Its label flips per mode. -->
+            <div class="mode-switch">
+              <button type="button" id="modeSwitchBtn" class="btn btn-accent">Switch to Stadium Count</button>
+            </div>
+          </div>
+
+          <div class="admin-rules-entry">
+            <h3>Line Rules</h3>
+            <p class="muted">Change the official rules shown on the home page.</p>
+            <button type="button" id="editRulesBtn" class="btn btn-accent">Edit Line Rules</button>
+          </div>
+        </div>
+
+        <!-- Rule editor. Opening it and saving from it both ask for
+             confirmation, since whatever is saved goes live as the
+             official rules. -->
+        <div id="rulesEditor" class="rules-editor hidden">
+          <h3>Edit Line Rules</h3>
+          <p class="muted">Each box is one rule, shown on the home page in this order. Nothing changes on the site until you press Save.</p>
+          <ol id="rulesEditorList" class="rules-editor-list"></ol>
+          <button type="button" id="addRuleBtn" class="btn adjust-btn">+ Add a Rule</button>
+          <div class="rules-editor-actions">
+            <button type="button" id="cancelRulesBtn" class="btn adjust-btn">Cancel</button>
+            <button type="button" id="saveRulesBtn" class="btn btn-accent">Save Rules</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Confirmation box used instead of the browser's confirm() pop-up,
+       which browsers can silence (see the note in admin.css). -->
+  <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+    <form method="dialog">
+      <h3 id="confirmTitle"></h3>
+      <p id="confirmMessage"></p>
+      <div class="confirm-actions">
+        <button type="submit" value="cancel" id="confirmCancel" class="btn adjust-btn">Cancel</button>
+        <button type="submit" value="confirm" id="confirmOk" class="btn btn-accent">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script src="mock-api.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

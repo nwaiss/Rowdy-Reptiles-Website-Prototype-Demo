@@ -6,21 +6,21 @@
   <title>Rowdy Reptiles — UF Gators Hype Squad</title>
   <meta name="description" content="Rowdy Reptiles is the official hype squad for the Florida Gators student section: line rules and live game-day line counts." />
   <link rel="icon" href="logo.png" />
-  <!-- Preload the display fonts so the kicker/heading boxes don't resize
-       (and visibly jump) once the fonts finish loading after a fallback
-       font briefly renders first. -->
+  <!-- Preload the display font so headings don't visibly jump when it
+       replaces the fallback font. -->
   <link rel="preload" href="fonts/Anton-Regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/Graduate-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- DEMO BUILD: a static prototype with no server. mock-api.js answers
+       every /api request inside the browser (saved in localStorage). The
+       page code itself (app.js, styles.css) is identical to the real site. -->
   <a class="skip-link" href="#main">Skip to content</a>
 
   <main id="main">
     <!-- The whole public site is this one page: hero banner, then the live
-         line counter, then the line rules. There is no header or nav — the
-         only other view is the admin dashboard, reached from the footer. -->
-    <section id="home" class="tab">
+         line counter, then the line rules. There is no header or nav. -->
+    <section id="home">
       <div class="jumbotron">
         <div class="jumbotron-inner">
           <!-- Kicker tag removed for now so the logo can take its space
@@ -31,7 +31,7 @@
           <!-- Logo on the left, "Line Manager" in the old text-title style
                on the right. Reads as "Rowdy Reptiles Line Manager". -->
           <h1 class="hero-heading">
-            <img class="wordmark" src="logo-wordmark.png" alt="Rowdy Reptiles" width="1720" height="1194" />
+            <img class="wordmark" src="logo-wordmark.png" alt="Rowdy Reptiles" width="848" height="585" />
             <span class="hero-title">Line<br>Manager</span>
           </h1>
           <p class="tagline">The official hype squad for the Florida Gators student section.</p>
@@ -40,134 +40,31 @@
 
       <div id="lineCounter" class="panel home-section">
         <h2>Game Line Counter</h2>
-        <div class="scoreboard">
+        <!-- Two looks, switched by app.js: navy while counting the line, and
+             orange (.admitted) once doors open and it counts students
+             admitted into the stadium. -->
+        <div id="scoreboard" class="scoreboard">
           <div class="scoreboard-top">
             <span id="lineStatusBadge" class="line-badge">Checking…</span>
             <div id="lineLabel" class="line-label"></div>
           </div>
-          <div id="lineCount" class="line-count">—</div>
-          <span class="scoreboard-caption">in line</span>
+          <div id="lineCount" class="line-count" aria-live="polite">—</div>
+          <span id="lineCaption" class="scoreboard-caption">in line</span>
           <p id="lineBandNotice" class="band-notice hidden">Last band was given out</p>
+          <p id="lineCapacityNotice" class="capacity-notice hidden">Capacity reached: no more seats</p>
           <p id="lineUpdated" class="scoreboard-updated muted"></p>
         </div>
-        <p class="muted">Updates automatically while this page is open.</p>
+        <p id="lineCounterNote" class="muted">Updates automatically while this page is open.</p>
         <p class="muted">Only 500 wristbands are given out, even though the lower bowl seats 700 students — get here early to make sure you get one.</p>
       </div>
 
       <div id="lineRules" class="panel home-section">
         <h2>Line Rules</h2>
         <div class="rules-card">
-          <!-- Filled from /api/rules — admins edit these from the dashboard. -->
+          <!-- Filled from /api/rules. -->
           <ul id="rulesList" class="rules-list" aria-live="polite">
             <li class="rules-loading">Loading rules…</li>
           </ul>
-        </div>
-      </div>
-    </section>
-
-    <section id="admin" class="tab panel hidden">
-      <a href="#" data-tab="home" class="back-link">&larr; Back to site</a>
-      <div id="adminLoggedOut">
-        <h2>Admin Login</h2>
-        <form id="loginForm" class="stack-form" autocomplete="off">
-          <label for="adminPassword">Password</label>
-          <input id="adminPassword" name="password" type="password" autocomplete="current-password" required />
-          <button type="submit" class="btn btn-accent">Log in</button>
-          <p id="loginError" class="form-error hidden" role="alert"></p>
-          <p class="muted">Demo build — password is <strong>rowdydemo</strong>. Nothing you enter here is sent anywhere; it's checked in your browser only.</p>
-        </form>
-      </div>
-
-      <div id="adminLoggedIn" class="hidden">
-        <div class="admin-header">
-          <h2>Admin Dashboard</h2>
-          <button id="logoutBtn" class="btn adjust-btn">Log out</button>
-        </div>
-
-        <!-- Main dashboard view. Hidden while the rule editor below is open. -->
-        <div id="adminMain">
-          <div id="adminLine">
-            <!-- Only shown when no line is live. -->
-            <div id="lineStartCard" class="line-start-card">
-              <h3>Start a New Line</h3>
-              <form id="lineStartForm" class="stack-form">
-                <label for="lineLabelInput">Game / label</label>
-                <input id="lineLabelInput" maxlength="80" placeholder="vs. Georgia — Basketball" />
-                <label for="lineStartInput">Starting count</label>
-                <input id="lineStartInput" type="number" min="0" max="2000" value="0" />
-                <button type="submit" class="btn btn-accent">Start Line</button>
-              </form>
-            </div>
-
-            <!-- Only shown while a line is live. End This Line must be used
-                 before Start a New Line becomes available again. -->
-            <div id="lineLiveControls" class="hidden">
-              <div class="live-count-display">
-                <span class="line-badge active">Live</span>
-                <div id="adminLineCount" class="admin-line-count">—</div>
-                <div id="adminLineLabelDisplay" class="admin-line-label"></div>
-                <p id="adminBandNotice" class="band-notice hidden">Last band was given out</p>
-              </div>
-
-              <div id="lineQuickAdjust" class="line-quick-adjust">
-                <button type="button" class="btn adjust-btn adjust-btn-lg" data-delta="-1" aria-label="Remove one">&minus;1</button>
-                <button type="button" class="btn adjust-btn adjust-btn-lg" data-delta="1" aria-label="Add one">+1</button>
-              </div>
-
-              <div class="line-bulk-adjust">
-                <label for="lineBulkAmount">Add or remove a group</label>
-                <div class="line-bulk-row">
-                  <button type="button" id="lineBulkRemove" class="btn adjust-btn">&minus; Remove</button>
-                  <select id="lineBulkAmount">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5" selected>5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                  </select>
-                  <button type="button" id="lineBulkAdd" class="btn adjust-btn">+ Add</button>
-                </div>
-              </div>
-
-              <div class="line-manual-set">
-                <label for="lineSetInput">Set exact count</label>
-                <div class="line-bulk-row">
-                  <input id="lineSetInput" type="number" min="0" max="2000" placeholder="e.g. 120" />
-                  <button type="button" id="lineSetBtn" class="btn adjust-btn">Set</button>
-                </div>
-              </div>
-
-              <div class="line-end-actions">
-                <button id="noMoreBandsBtn" class="btn btn-warning">No More Bands</button>
-                <button id="stopLineBtn" class="btn btn-danger">End This Line</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="admin-rules-entry">
-            <h3>Line Rules</h3>
-            <p class="muted">Change the official rules shown on the home page.</p>
-            <button type="button" id="editRulesBtn" class="btn btn-accent">Edit Line Rules</button>
-          </div>
-        </div>
-
-        <!-- Rule editor. Opened from "Edit Line Rules" (after a confirm, in
-             case it was tapped by accident); saving asks once more, since
-             whatever is saved goes live as the official rules. -->
-        <div id="rulesEditor" class="rules-editor hidden">
-          <h3>Edit Line Rules</h3>
-          <p class="muted">Each box is one rule, shown on the home page in this order. Nothing changes on the site until you press Save.</p>
-          <ol id="rulesEditorList" class="rules-editor-list"></ol>
-          <button type="button" id="addRuleBtn" class="btn adjust-btn">+ Add a Rule</button>
-          <div class="rules-editor-actions">
-            <button type="button" id="cancelRulesBtn" class="btn adjust-btn">Cancel</button>
-            <button type="button" id="saveRulesBtn" class="btn btn-accent">Save Rules</button>
-          </div>
         </div>
       </div>
     </section>
@@ -175,10 +72,10 @@
 
   <footer class="site-footer">
     <p>&copy; 2026 Rowdy Reptiles — UF Gators student section hype squad.</p>
-    <a href="#admin" data-tab="admin" class="footer-admin-btn">Admin</a>
+    <!-- Demo only: the real site has no admin link anywhere (its dashboard
+         lives at a secret URL). Reviewers need a way in, so it's here. -->
+    <a href="admin.html" class="footer-admin-btn">Admin</a>
   </footer>
-
-  <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <script src="mock-api.js"></script>
   <script src="app.js"></script>

@@ -1,0 +1,334 @@
+/*
+  Admin dashboard styles.
+
+  Loaded after /styles.css (the public stylesheet, which provides the color
+  and font variables) and served only from the secret admin path, so the
+  public page never downloads or references any of this.
+
+  Layout: one narrow, centered column even on desktop. Officers mostly use
+  the dashboard on a phone at the gate, so it's designed as a mobile app.
+
+  Sections:
+    1. Page shell and back link
+    2. Buttons
+    3. Forms
+    4. Dashboard card and Google Sheet status
+    5. Line control (start card, live count, adjust controls, end actions)
+    6. Line rules entry and editor
+    7. Confirm dialog
+    8. Toasts
+*/
+
+/* ---------- 1. Page shell ---------- */
+/* The dashboard is a .panel, so it gets breathing room at the top. */
+.tab.panel { padding-top: 32px; }
+
+/* With no site header, this link is the way back to the public page. */
+.back-link {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.back-link:hover { text-decoration: underline; }
+
+/* ---------- 2. Buttons ---------- */
+/* Plain rounded rectangles. The bottom-edge box-shadow gives each variant a
+   game-button "press" feel. (A clipped-corner shape was tried and dropped:
+   the cut angle scaled with each button's size, so rows of buttons looked
+   mismatched.) */
+.btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 13px 24px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+/* Shown while a request is in flight, so a double tap can't send twice. */
+.btn:disabled { opacity: 0.6; cursor: wait; transform: none; }
+
+/* Navy text on orange, not white: white on this orange fails WCAG AA
+   contrast at button sizes; navy passes. */
+.btn-accent { background: var(--orange); color: var(--navy-deep); box-shadow: 0 4px 0 var(--orange-dark); }
+.btn-accent:hover { background: var(--amber); }
+.btn-accent:active { box-shadow: 0 2px 0 var(--orange-dark); }
+
+/* Everyday controls (+1/−1, Set, Log out, Cancel). */
+.adjust-btn { background: var(--navy); color: #fff; box-shadow: 0 4px 0 var(--navy-deep); font-family: inherit; text-transform: none; letter-spacing: normal; }
+.adjust-btn:hover { background: var(--navy-soft); }
+.adjust-btn:active { box-shadow: 0 2px 0 var(--navy-deep); }
+.adjust-btn-lg { font-size: 1.4rem; font-weight: 800; padding: 14px 28px; min-width: 84px; }
+
+/* Destructive: End This Line. */
+.btn-danger { background: #c62828; color: #fff; box-shadow: 0 4px 0 #8f1d1d; }
+.btn-danger:hover { background: #a11f1f; }
+.btn-danger:active { box-shadow: 0 2px 0 #8f1d1d; }
+
+/* Caution, not destructive: No More Bands. Amber sits between accent (go)
+   and danger (stop). */
+.btn-warning { background: #b45309; color: #fff; box-shadow: 0 4px 0 #7c3a05; }
+.btn-warning:hover { background: #92400a; }
+.btn-warning:active { box-shadow: 0 2px 0 #7c3a05; }
+
+/* ---------- 3. Forms ---------- */
+.stack-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 420px;
+  margin: 12px auto 0;
+}
+.stack-form label { font-weight: 600; font-size: 0.9rem; margin-top: 6px; color: var(--navy); }
+.stack-form input {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--navy-soft);
+  color: var(--text);
+  background: var(--surface);
+}
+.stack-form input:focus { border-color: var(--orange); }
+.stack-form button { margin-top: 12px; align-self: center; }
+.form-error { color: #b8291f; font-weight: 600; }
+
+#adminLoggedOut { max-width: 420px; margin: 12px auto 0; text-align: center; }
+
+/* ---------- 4. Dashboard card ---------- */
+/* A tinted card, darker than the page, so the white controls inside stand
+   out by lightness contrast (works for colorblind users too). */
+#adminLoggedIn {
+  max-width: 520px;
+  margin: 12px auto 0;
+  padding: 28px 24px 36px;
+  background: #dde3f2;
+  border-radius: var(--radius);
+  text-align: center;
+}
+#adminLoggedIn h3 { margin: 20px 0 4px; }
+
+.admin-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* Google Sheet connection status. The text says what's wrong, so color is
+   only a secondary cue. */
+.sheet-status {
+  margin: 4px 0 16px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.sheet-status.ok { background: #e3f3e8; color: #1a5e33; }
+.sheet-status.warn { background: #fdf0d9; color: #7c3a05; }
+
+/* ---------- 5. Line control ---------- */
+/* Start card: only shown when no line is live. */
+.line-start-card {
+  background: #c7d2ef;
+  border: 1px solid var(--navy-soft);
+  border-radius: var(--radius);
+  padding: 20px 24px 24px;
+}
+
+/* Live count: a small copy of the public scoreboard. */
+.live-count-display {
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px),
+    var(--navy-deep);
+  border-radius: var(--radius);
+  padding: 22px 24px 18px;
+  margin-bottom: 20px;
+}
+.admin-line-count {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-size: 4rem;
+  line-height: 1;
+  color: var(--orange);
+  text-shadow: 0 0 12px rgba(239, 106, 44, 0.65), 0 0 32px rgba(239, 106, 44, 0.35);
+  margin: 10px 0 4px;
+}
+.admin-line-label { font-family: var(--font-display); color: #fff; text-transform: uppercase; letter-spacing: 0.03em; font-size: 1rem; }
+/* "Sheet 120 + 5 extra" under the big number. */
+.count-breakdown {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Typing in a number is the main way officers enter the count, so it comes
+   first; +1/−1 are for small corrections. */
+.extra-set { margin-bottom: 18px; }
+.extra-set label { display: block; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
+.input-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.input-row input {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--navy-soft);
+  font-size: 1.2rem;
+  width: 140px;
+  text-align: center;
+}
+.input-row input:focus { border-color: var(--orange); }
+.adjust-help { margin: 0 0 14px; }
+.line-quick-adjust { display: flex; justify-content: center; gap: 14px; margin-bottom: 24px; }
+
+.line-end-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* Stadium count: the live display turns orange with blue digits, matching
+   the public scoreboard (.scoreboard.admitted in styles.css), so officers
+   can tell at a glance which count students are seeing. */
+.live-count-display.admitted { background: var(--gator-orange); }
+.live-count-display.admitted .admin-line-count { color: var(--gator-blue); text-shadow: 0 2px 0 rgba(10, 20, 66, 0.18); }
+.live-count-display.admitted .admin-line-label,
+.live-count-display.admitted .count-breakdown,
+.live-count-display.admitted .capacity-notice { color: var(--navy-deep); }
+.live-count-display.admitted .line-badge { background: rgba(10, 20, 66, 0.14); color: var(--navy-deep); }
+.live-count-display.admitted .line-badge.active::before { background: var(--gator-blue); box-shadow: none; }
+
+/* The mode switch sits at the very bottom of the line section, set apart
+   from the game-day buttons above it. */
+.mode-switch {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px dashed rgba(10, 20, 66, 0.15);
+}
+
+/* "Last band was given out" lives in the public stylesheet (.band-notice),
+   since the public scoreboard shows it too. */
+
+/* ---------- 6. Line rules ---------- */
+/* Set apart from the game-day controls with a divider: editing rules is an
+   occasional task, not a live one. */
+.admin-rules-entry {
+  margin-top: 28px;
+  padding-top: 8px;
+  border-top: 2px solid rgba(10, 20, 66, 0.15);
+}
+.admin-rules-entry p { margin: 0 0 12px; }
+
+.rules-editor-list {
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+.rule-edit-item {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+.rule-edit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.rule-edit-num { font-family: var(--font-display); color: var(--navy); text-transform: uppercase; letter-spacing: 0.04em; }
+.rule-edit-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.rule-tool {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--navy-soft);
+  background: var(--surface);
+  color: var(--navy);
+  cursor: pointer;
+}
+.rule-tool:hover:not(:disabled) { background: var(--surface-alt); }
+.rule-tool:disabled { opacity: 0.35; cursor: default; }
+.rule-tool-remove { border-color: #c62828; color: #b8291f; }
+.rule-tool-remove:hover { background: #fdecea; }
+.rule-edit-item textarea {
+  display: block;
+  width: 100%;
+  min-height: 4.5em;
+  resize: vertical;
+  padding: 10px;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text);
+  border: 1.5px solid var(--navy-soft);
+  border-radius: var(--radius-sm);
+}
+.rule-edit-item textarea:focus { border-color: var(--orange); }
+.rules-editor-actions { display: flex; justify-content: center; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+
+/* ---------- 7. Confirm dialog ---------- */
+/* An in-page <dialog> replaces the browser's confirm() pop-up. Browsers let
+   users (or themselves) silence repeated confirm() pop-ups, after which
+   every one silently answers "Cancel" and buttons like End This Line stop
+   working. A page-drawn dialog can't be suppressed. */
+.confirm-dialog {
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 24px;
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: 0 20px 50px -10px rgba(10, 20, 66, 0.5);
+  text-align: center;
+  color: var(--text);
+}
+.confirm-dialog::backdrop { background: rgba(10, 20, 66, 0.55); }
+.confirm-dialog h3 { margin: 0 0 8px; }
+/* pre-line keeps the paragraph breaks in longer warnings. */
+.confirm-dialog p { margin: 0 0 20px; white-space: pre-line; line-height: 1.5; }
+.confirm-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- 8. Toasts ---------- */
+/* One at a time, bottom-center. pointer-events: none lets taps pass
+   straight through to the buttons underneath. */
+.toasts {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  z-index: 1000;
+  pointer-events: none;
+}
+.toast {
+  background: var(--navy);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 14px rgba(20, 36, 82, 0.35);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  max-width: 320px;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: #1a7a3e; }
+.toast.error { background: #b8291f; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .toast { transition: none !important; }
+}
+
+/* Demo only: explains that the sheet is simulated. */
+.demo-note { margin: -8px 0 16px; font-size: 0.8rem; }

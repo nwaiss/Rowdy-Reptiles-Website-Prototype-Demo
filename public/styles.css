@@ -14,7 +14,7 @@
     asked in Oct 2026), and all UI chrome (buttons, badges, the scoreboard)
     — ultra-bold condensed block letter, matching the club's own game-day
     graphics. Meant to be loud.
-  - Graduate for every other heading (the admin dashboard's h2/h3) — a face drawn
+  - Graduate for every other heading (h1/h2/h3 elsewhere) — a face drawn
     for varsity/collegiate lettering. This has been tried, replaced, and
     brought back once already (a detour through making every heading Anton,
     then a detour through a rounded "Fredoka" font, both reverted) — leave
@@ -49,6 +49,9 @@
   --navy-soft: #3f5fe0;
   --orange: #ef6a2c;
   --orange-dark: #cf5620;
+  /* The stadium-count scoreboard's colors (see .scoreboard.admitted). */
+  --gator-orange: #fa4616;
+  --gator-blue: #0021a5;
   --amber: #ffb020;
   --text: #1c2136;
   --text-muted: #5b6178;
@@ -137,10 +140,6 @@ h1, h2, h3 { color: var(--navy); letter-spacing: 0.02em; font-family: var(--font
 h1 { font-size: 4.2rem; margin: 0 0 10px; }
 h2 { font-size: 2.2rem; letter-spacing: 0.03em; margin: 0; }
 h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
-
-/* Top-level views that are a .panel themselves (the admin dashboard) get
-   breathing room at the top of the page. */
-.tab.panel { padding-top: 32px; }
 
 /* ---------- First screen: hero + line counter ----------
    On load (desktop and phone alike) the hero fills the top half of the
@@ -243,35 +242,6 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 .jumbotron .tagline { color: rgba(255,255,255,0.85); }
 .tagline { font-size: clamp(1rem, calc(3.2svh / var(--zoom-factor)), 1.4rem); line-height: 1.4; margin: 0; font-weight: 600; }
 
-/* Plain rounded rectangle — no corner notch. A clip-path cut looked good on
-   one big lone button, but the angle scales with each button's own size, so
-   a row of same-purpose buttons (admin tabs, the line-adjust row) ended up
-   with mismatched-looking "chopped corners" instead of one consistent
-   shape. The bottom-edge box-shadow on each variant still gives the
-   game-button "press" feel without that problem. */
-.btn {
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 13px 24px;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.btn:hover { transform: translateY(-1px); }
-.btn:active { transform: translateY(0); }
-/* Navy-on-orange (not white-on-orange) because orange doesn't clear WCAG AA
-   4.5:1 against white at button-text sizes; navy does. Hover inverts to
-   navy-bg/white-text, which stays comfortably above the threshold too. */
-.btn-accent { background: var(--orange); color: var(--navy-deep); box-shadow: 0 4px 0 var(--orange-dark); }
-.btn-accent:hover { background: var(--amber); }
-.btn-accent:active { box-shadow: 0 2px 0 var(--orange-dark); }
-
 .muted { color: var(--text-muted); font-size: 0.9rem; }
 
 /* ---------- Home page sections ---------- */
@@ -344,7 +314,7 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   width: 10px;
   height: 10px;
   background: var(--orange);
-  border-radius: 2px;
+  border-radius: 50%;
 }
 /* Placeholder/error line while the rules load — no bullet, muted. */
 .rules-list li.rules-loading { padding-left: 0; color: var(--text-muted); }
@@ -426,98 +396,7 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   text-align: center;
 }
 
-/* ---------- Forms ---------- */
-.stack-form {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 420px;
-  margin-top: 12px;
-}
-.stack-form label { font-weight: 600; font-size: 0.9rem; margin-top: 6px; color: var(--navy); }
-.stack-form input {
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--navy-soft);
-  color: var(--text);
-  background: var(--surface);
-}
-.stack-form input:focus { border-color: var(--orange); }
-.stack-form button { margin-top: 12px; align-self: flex-start; }
-.form-error { color: #b8291f; font-weight: 600; }
-
-/* ---------- Admin ----------
-   Deliberately narrower and centered than the rest of the site — this is
-   used far more on phones than the public pages, so it gets a mobile-app
-   feel (one centered column) even when opened on a desktop browser. */
-/* With no site header, this link is the way back to the public page. */
-.back-link {
-  display: inline-block;
-  margin-bottom: 16px;
-  font-weight: 600;
-  color: var(--navy);
-}
-.back-link:hover { text-decoration: underline; }
-/* Darker than the page background on purpose — the inactive white admin
-   tab buttons only had a faint border to read as clickable before, which
-   is a weak/hue-only cue. A visibly darker surface behind them makes the
-   white buttons pop by simple lightness contrast, which holds up for
-   colorblind users the same way it does for anyone else. */
-#adminLoggedIn {
-  max-width: 520px;
-  margin: 12px auto 0;
-  padding: 28px 24px 36px;
-  background: #dde3f2;
-  border-radius: var(--radius);
-  text-align: center;
-}
-#adminLoggedIn .stack-form { margin-left: auto; margin-right: auto; }
-#adminLoggedIn .stack-form button { align-self: center; }
-#adminLoggedIn h3 { margin: 20px 0 4px; }
-
-#adminLoggedOut { max-width: 420px; margin: 12px auto 0; text-align: center; }
-#adminLoggedOut .stack-form { margin-left: auto; margin-right: auto; }
-#adminLoggedOut .stack-form button { align-self: center; }
-
-.admin-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-/* Start-a-new-line card: its own tinted panel so it visually reads as a
-   distinct step, not just more page content. */
-.line-start-card {
-  background: #c7d2ef;
-  border: 1px solid var(--navy-soft);
-  border-radius: var(--radius);
-  padding: 20px 24px 24px;
-}
-
-/* Live line control: count/adjustment controls at the top, End This Line at
-   the very bottom, per the requested order. */
-.live-count-display {
-  background:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px),
-    var(--navy-deep);
-  border-radius: var(--radius);
-  padding: 22px 24px 18px;
-  margin-bottom: 20px;
-}
-.admin-line-count {
-  font-family: var(--font-display);
-  font-variant-numeric: tabular-nums;
-  font-size: 4rem;
-  line-height: 1;
-  color: var(--orange);
-  text-shadow: 0 0 12px rgba(239, 106, 44, 0.65), 0 0 32px rgba(239, 106, 44, 0.35);
-  margin: 10px 0 4px;
-}
-.admin-line-label { font-family: var(--font-display); color: #fff; text-transform: uppercase; letter-spacing: 0.03em; font-size: 1rem; }
-
-/* "Last band was given out" — a one-way milestone notice, separate from the
+/* "Last band was given out" — a milestone notice (undoable from the dashboard), separate from the
    headcount itself. Amber so it reads as caution, not the danger-red of
    ending the line entirely. */
 .band-notice {
@@ -530,101 +409,41 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 }
 .scoreboard .band-notice { margin-top: 2px; }
 
-.line-quick-adjust { display: flex; justify-content: center; gap: 14px; margin-bottom: 20px; }
-.adjust-btn { background: var(--navy); color: #fff; box-shadow: 0 4px 0 var(--navy-deep); font-family: inherit; text-transform: none; letter-spacing: normal; }
-.adjust-btn:hover { background: var(--navy-soft); }
-.adjust-btn:active { box-shadow: 0 2px 0 var(--navy-deep); }
-.adjust-btn-lg { font-size: 1.4rem; font-weight: 800; padding: 14px 28px; min-width: 84px; }
-
-.line-bulk-adjust, .line-manual-set { margin-bottom: 20px; }
-.line-bulk-adjust label, .line-manual-set label { display: block; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
-.line-bulk-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
-.line-bulk-row select, .line-bulk-row input {
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+/* "Capacity reached: no more seats". Only shown on the stadium count. */
+.capacity-notice {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   font-size: 1rem;
-  width: 100px;
-  text-align: center;
+  margin: 6px 0 0;
 }
 
-.btn-danger { background: #c62828; color: #fff; box-shadow: 0 4px 0 #8f1d1d; }
-.btn-danger:hover { background: #a11f1f; }
-.btn-danger:active { box-shadow: 0 2px 0 #8f1d1d; }
+/* ---------- Stadium count (doors open) ----------
+   Once doors open, officers switch the counter to count students admitted
+   into the stadium. The same box turns gator orange with gator-blue digits
+   so nobody mistakes it for the line count. The digits are large, so blue
+   on orange clears the WCAG large-text contrast bar; the small text uses
+   the darker --navy-deep, which clears the normal-text bar. */
+.scoreboard.admitted {
+  background: var(--gator-orange);
+  box-shadow: 0 10px 30px -12px rgba(250, 70, 22, 0.55);
+}
+.scoreboard.admitted .line-count {
+  color: var(--gator-blue);
+  text-shadow: 0 2px 0 rgba(10, 20, 66, 0.18);
+}
+.scoreboard.admitted .line-count.flash { animation-name: count-flash-admitted; }
+@keyframes count-flash-admitted {
+  0%, 100% { color: var(--gator-blue); }
+  35% { color: #fff; }
+}
+.scoreboard.admitted .line-label,
+.scoreboard.admitted .scoreboard-caption,
+.scoreboard.admitted .capacity-notice { color: var(--navy-deep); }
+.scoreboard.admitted .muted { color: rgba(10, 20, 66, 0.75); }
+.scoreboard.admitted .line-badge { background: rgba(10, 20, 66, 0.14); color: var(--navy-deep); }
+.scoreboard.admitted .line-badge.active::before { background: var(--gator-blue); box-shadow: none; }
 
-/* Caution, not destructive — visually between accent (go) and danger
-   (stop): amber instead of orange or red. */
-.btn-warning { background: #b45309; color: #fff; box-shadow: 0 4px 0 #7c3a05; }
-.btn-warning:hover { background: #92400a; }
-.btn-warning:active { box-shadow: 0 2px 0 #7c3a05; }
-
-.line-end-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-
-/* "Edit Line Rules" entry point — set apart from the game-day line controls
-   above it with a divider, since it's an occasional task, not a live one. */
-.admin-rules-entry {
-  margin-top: 28px;
-  padding-top: 8px;
-  border-top: 2px solid rgba(10, 20, 66, 0.15);
-}
-.admin-rules-entry p { margin: 0 0 12px; }
-
-/* ---------- Admin: line rules editor ---------- */
-.rules-editor-list {
-  list-style: none;
-  margin: 16px 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  text-align: left;
-}
-.rule-edit-item {
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  box-shadow: var(--shadow);
-}
-.rule-edit-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-.rule-edit-num { font-family: var(--font-display); color: var(--navy); text-transform: uppercase; letter-spacing: 0.04em; }
-.rule-edit-tools { display: flex; gap: 6px; flex-wrap: wrap; }
-.rule-tool {
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--navy-soft);
-  background: var(--surface);
-  color: var(--navy);
-  cursor: pointer;
-}
-.rule-tool:hover:not(:disabled) { background: var(--surface-alt); }
-.rule-tool:disabled { opacity: 0.35; cursor: default; }
-.rule-tool-remove { border-color: #c62828; color: #b8291f; }
-.rule-tool-remove:hover { background: #fdecea; }
-.rule-edit-item textarea {
-  display: block;
-  width: 100%;
-  min-height: 4.5em;
-  resize: vertical;
-  padding: 10px;
-  font: inherit;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--text);
-  border: 1.5px solid var(--navy-soft);
-  border-radius: var(--radius-sm);
-}
-.rule-edit-item textarea:focus { border-color: var(--orange); }
-.rules-editor-actions { display: flex; justify-content: center; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
 
 /* ---------- Footer ---------- */
 .site-footer {
@@ -639,8 +458,7 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   flex-wrap: wrap;
 }
 .site-footer p { margin: 0; }
-/* The only way into the admin dashboard — deliberately low-key, since it's
-   for officers, not the students the page is for. */
+/* Demo only: the footer Admin button (the real site has no admin link). */
 .footer-admin-btn {
   padding: 6px 14px;
   border: 1px solid var(--border);
@@ -652,31 +470,6 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   transition: background-color 0.15s ease;
 }
 .footer-admin-btn:hover { background: var(--surface-alt); }
-
-/* ---------- Toasts ---------- */
-.toasts {
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 1000;
-}
-.toast {
-  background: var(--navy);
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: var(--radius-sm);
-  box-shadow: 0 4px 14px rgba(20, 36, 82, 0.35);
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
-  max-width: 320px;
-}
-.toast.show { opacity: 1; transform: translateY(0); }
-.toast.success { background: #1a7a3e; }
-.toast.error { background: #b8291f; }
 
 @media (max-width: 600px) {
   h1 { font-size: 3rem; }
@@ -691,5 +484,5 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn, .line-badge.active::before, .line-count.flash { animation: none !important; transition: none !important; }
+  .line-badge.active::before, .line-count.flash { animation: none !important; transition: none !important; }
 }
