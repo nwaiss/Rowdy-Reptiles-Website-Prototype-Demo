@@ -332,3 +332,32 @@
 
 /* Demo only: explains that the sheet is simulated. */
 .demo-note { margin: -8px 0 16px; font-size: 0.8rem; }
+
+/* Demo only: the "Simulated Google Sheet" panel at the bottom of the
+   dashboard (demo-sheet.js). Dashed orange border plus a "Demo only" tag so
+   it can't be mistaken for a real control. */
+.demo-sheet {
+  margin-top: 28px;
+  padding: 18px 18px 20px;
+  border: 2px dashed var(--orange);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.demo-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--orange);
+  color: var(--navy-deep);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.demo-sheet h3 { margin: 8px 0 4px; }
+.demo-sheet .muted { margin: 0 0 12px; }
+.demo-sheet-value { margin: 0 0 4px; font-weight: 600; color: var(--navy); }
+.demo-sheet-value strong { font-size: 1.3rem; }
+.demo-sheet-auto { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; font-size: 0.9rem; cursor: pointer; }
+.demo-sheet-auto input { width: 18px; height: 18px; accent-color: var(--orange); }
+.demo-sheet .demo-sheet-idle { margin: 10px 0 0; }

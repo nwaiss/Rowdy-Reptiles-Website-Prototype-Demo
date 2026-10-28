@@ -14,8 +14,10 @@
  *     show in other tabs of the same browser but not on other devices.
  *   - The admin "login" is a demo password checked in the browser
  *     (rowdydemo). There's no real security here, and nothing to protect.
- *   - The Google Sheet is simulated: once a line starts, a group of 1–4
- *     people "joins" every 20 seconds (see simulatedSheet below).
+ *   - The Google Sheet is simulated. The demo-only panel at the bottom of the
+ *     dashboard (demo-sheet.js) sets how many students are on it, and can
+ *     also add a random group of 1–4 every 20 seconds (see "Simulated
+ *     Google Sheet" below). Its routes live under /api/demo/.
  *   - GET /api/line always returns the detailed admin view. The public page
  *     ignores the extra fields.
  *
@@ -33,6 +35,7 @@
     line: 'rr_demo_line_v2', // v2: line + stadium modes (v1 had a single `count`)
     admin: 'rr_demo_admin_v1',
     rules: 'rr_demo_rules_v1',
+    sheet: 'rr_demo_sheet_v1', // the simulated Google Sheet (see below)
   };
 
   /** Public demo credential, also shown on the login form. */
@@ -118,7 +121,6 @@
       extra: Number.isFinite(saved.extra) ? saved.extra : 0,
       admitted: Number.isFinite(saved.admitted) ? saved.admitted : 0,
       capacityReached: saved.capacityReached === true,
-      startedAt: typeof saved.startedAt === 'string' ? saved.startedAt : null, // demo only: drives the simulated sheet
       updatedAt: typeof saved.updatedAt === 'string' ? saved.updatedAt : new Date().toISOString(),
     };
   }
@@ -138,12 +140,33 @@
   // Simulated Google Sheet (demo only)
   // =====================================================================
   // The real server reads Count!B2 from the club's sheet every 5 seconds.
-  // Here, a group "joins" every GROUP_EVERY_MS after the line starts. The
-  // total is worked out from the start time, so it's the same in every tab
-  // and survives reloads.
+  // Here the sheet is a number the demo controls (the "Simulated Google
+  // Sheet" panel at the bottom of the dashboard, demo-sheet.js):
+  //   - `base`: students on the sheet, as last set (or as of the last pause);
+  //   - `auto`: whether a random group of 1–4 also "joins" every
+  //     GROUP_EVERY_MS while a line is live;
+  //   - `since`: when that automatic growth (re)started, or null if paused.
+  // The total is worked out from these and the clock, so it's the same in
+  // every tab and survives reloads. Starting a line resets it to 0, like the
+  // real sheet's "Start a new game" menu.
 
   const GROUP_EVERY_MS = 20000;
   const MAX_GROUPS = 150;
+  const MAX_SIM_STUDENTS = 5000;
+
+  function readSim() {
+    const saved = readJson(STORAGE.sheet, {});
+    return {
+      base: Number.isFinite(saved.base) ? clamp(Math.trunc(saved.base), 0, MAX_SIM_STUDENTS) : 0,
+      auto: saved.auto !== false, // on by default
+      since: typeof saved.since === 'string' ? saved.since : null,
+      setAt: typeof saved.setAt === 'string' ? saved.setAt : null,
+    };
+  }
+
+  function saveSim(changes) {
+    return writeJson(STORAGE.sheet, { ...readSim(), ...changes });
+  }
 
   /** A repeatable group size of 1–4 for the i-th group. */
   function groupSize(i) {
@@ -156,15 +179,34 @@
     return 1 + ((h >>> 0) % 4);
   }
 
-  function simulatedSheet(line) {
-    const readAt = new Date().toISOString();
-    if (!line.active || !line.startedAt) return { configured: true, value: 0, readAt, changedAt: null, error: null };
-    const started = Date.parse(line.startedAt);
-    const groups = clamp(Math.floor((Date.now() - started) / GROUP_EVERY_MS), 0, MAX_GROUPS);
-    let value = 0;
-    for (let i = 0; i < groups; i++) value += groupSize(i);
-    const changedAt = groups ? new Date(started + groups * GROUP_EVERY_MS).toISOString() : null;
-    return { configured: true, value, readAt, changedAt, error: null };
+  /** The simulated sheet's current number, and when it last changed. */
+  function simTotal(sim) {
+    let value = sim.base;
+    let changedAt = sim.setAt;
+    if (sim.auto && sim.since) {
+      const since = Date.parse(sim.since);
+      const groups = clamp(Math.floor((Date.now() - since) / GROUP_EVERY_MS), 0, MAX_GROUPS);
+      for (let i = 0; i < groups; i++) value += groupSize(i);
+      if (groups) changedAt = new Date(since + groups * GROUP_EVERY_MS).toISOString();
+    }
+    return { value: Math.min(value, MAX_SIM_STUDENTS), changedAt };
+  }
+
+  /** Same shape as the real server's sheet snapshot (see sheet-poller.js). */
+  function simulatedSheet() {
+    const { value, changedAt } = simTotal(readSim());
+    return { configured: true, value, readAt: new Date().toISOString(), changedAt, error: null };
+  }
+
+  /** Freezes automatic growth at the current total (keeps the auto setting). */
+  function pauseSim() {
+    const sim = readSim();
+    saveSim({ base: simTotal(sim).value, since: null });
+  }
+
+  function simView() {
+    const sim = readSim();
+    return { active: readLine().active, value: simTotal(sim).value, auto: sim.auto, groupEverySeconds: GROUP_EVERY_MS / 1000 };
   }
 
   // =====================================================================
@@ -183,7 +225,7 @@
 
   function adminView() {
     const line = readLine();
-    const sheet = simulatedSheet(line);
+    const sheet = simulatedSheet();
     return {
       ...publicView(line, sheet),
       base: sheet.value ?? 0,
@@ -228,15 +270,18 @@
     'POST line/start': admin((body) => {
       if (readLine().active) throw new ApiError('A line is already live. End it before starting a new one.');
       const extra = body.extra === undefined || body.extra === '' ? 0 : parseExtra(body.extra);
-      const now = new Date().toISOString();
       saveLine({
         active: true, mode: 'line', label: cleanText(body.label, LIMITS.MAX_LABEL_LENGTH), extra,
-        bandsOut: false, admitted: 0, capacityReached: false, startedAt: now,
+        bandsOut: false, admitted: 0, capacityReached: false,
       });
+      // A new game starts the simulated sheet from 0 (the real sheet's
+      // "Start a new game" menu does the same).
+      const now = new Date().toISOString();
+      saveSim({ base: 0, setAt: now, since: readSim().auto ? now : null });
       return adminView();
     }),
     'POST line/stop': admin(() => {
-      if (readLine().active) saveLine({ active: false });
+      if (readLine().active) { saveLine({ active: false }); pauseSim(); }
       return adminView();
     }),
     'POST line/no-more-bands': admin(() => { requireMode(readLine(), 'line'); saveLine({ bandsOut: true }); return adminView(); }),
@@ -259,6 +304,24 @@
     'PUT line/admitted': admin((body) => { requireMode(readLine(), 'admitted'); saveLine({ admitted: parseAdmitted(body.admitted) }); return adminView(); }),
     'POST line/capacity-reached': admin(() => { requireMode(readLine(), 'admitted'); saveLine({ capacityReached: true }); return adminView(); }),
     'DELETE line/capacity-reached': admin(() => { requireMode(readLine(), 'admitted'); saveLine({ capacityReached: false }); return adminView(); }),
+
+    // Demo only: the "Simulated Google Sheet" panel (demo-sheet.js).
+    'GET demo/sheet': admin(() => simView()),
+    'PUT demo/sheet': admin((body) => {
+      if (!readLine().active) throw new ApiError('Start a line first.');
+      const value = parseWholeNumber(body.value);
+      if (value < 0) throw new ApiError('The number of students can\'t be negative.');
+      const now = new Date().toISOString();
+      const sim = readSim();
+      saveSim({ base: Math.min(value, MAX_SIM_STUDENTS), setAt: now, since: sim.auto ? now : null });
+      return simView();
+    }),
+    'PUT demo/sheet/auto': admin((body) => {
+      if (typeof body.auto !== 'boolean') throw new ApiError('Expected true or false.');
+      pauseSim(); // lock in the total so far, then resume from it if turned on
+      saveSim({ auto: body.auto, since: body.auto && readLine().active ? new Date().toISOString() : null });
+      return simView();
+    }),
 
     // Rules
     'PUT rules': admin((body) => {
@@ -284,9 +347,18 @@
     const match = url.pathname.match(/\/api\/(.+)$/);
     if (!match) return realFetch(input, init);
 
+    // Handle the request right away, then delay only the reply. A real server
+    // applies requests in the order they arrive; delaying before handling
+    // would apply rapid +1 taps in a random order, so the dashboard briefly
+    // showed a stale count.
+    const response = handle(match[1], init);
     await delay(120 + Math.random() * 180); // feels like a real network round trip
+    return response;
+  };
+
+  function handle(route, init) {
     const method = (init.method || 'GET').toUpperCase();
-    const handler = ROUTES[`${method} ${match[1]}`];
+    const handler = ROUTES[`${method} ${route}`];
     if (!handler) return jsonResponse({ error: 'Not found.' }, 404);
 
     let body = {};
@@ -298,7 +370,7 @@
     } catch (err) {
       return jsonResponse({ error: err.message || 'Something went wrong.' }, err.status || 500);
     }
-  };
+  }
 
   // =====================================================================
   // Old links

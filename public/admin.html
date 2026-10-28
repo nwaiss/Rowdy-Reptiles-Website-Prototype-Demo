@@ -44,7 +44,7 @@
         <!-- Main dashboard view. Hidden while the rule editor is open. -->
         <div id="adminMain">
           <p id="sheetStatus" class="sheet-status" role="status"></p>
-          <p class="muted demo-note">Demo: the Google Sheet is simulated. After you start a line, a new group joins about every 20 seconds.</p>
+          <p class="muted demo-note">Demo: the Google Sheet is simulated. Set how many students are on it at the bottom of this page.</p>
 
           <!-- Exactly one of #lineStartCard / #lineLiveControls is shown,
                depending on whether a line is live. -->
@@ -118,6 +118,28 @@
             <p class="muted">Change the official rules shown on the home page.</p>
             <button type="button" id="editRulesBtn" class="btn btn-accent">Edit Line Rules</button>
           </div>
+
+          <!-- DEMO ONLY (not on the real site): stands in for students
+               signing up through the club's Google Form. Driven by
+               demo-sheet.js through mock-api.js's /api/demo/ routes. -->
+          <div id="demoSheetPanel" class="demo-sheet">
+            <span class="demo-badge">Demo only</span>
+            <h3>Simulated Google Sheet</h3>
+            <p class="muted">This panel simulates students signing up through the club's Google Form, so you can try the line counter without real people. It only exists in this demo. The real site reads the count from the club's Google Sheet.</p>
+            <p class="demo-sheet-value">Simulated students in line: <strong id="demoSheetValue">—</strong></p>
+            <form id="demoSheetForm" class="extra-set">
+              <label for="demoSheetInput">Set simulated students in line</label>
+              <div class="input-row">
+                <input id="demoSheetInput" type="number" inputmode="numeric" min="0" max="5000" step="1" placeholder="e.g. 250" required />
+                <button type="submit" class="btn adjust-btn">Set</button>
+              </div>
+            </form>
+            <label class="demo-sheet-auto">
+              <input type="checkbox" id="demoSheetAuto" checked />
+              Also add a random group of 1–4 every 20 seconds
+            </label>
+            <p id="demoSheetIdle" class="muted demo-sheet-idle">Start a line to simulate students. Each new line starts the sheet at 0.</p>
+          </div>
         </div>
 
         <!-- Rule editor. Opening it and saving from it both ask for
@@ -154,5 +176,6 @@
 
   <script src="mock-api.js"></script>
   <script src="admin.js"></script>
+  <script src="demo-sheet.js"></script>
 </body>
 </html>
