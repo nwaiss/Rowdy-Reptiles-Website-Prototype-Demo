@@ -9,7 +9,8 @@ admin changes is saved to your browser's `localStorage` only, and nothing is sen
 anywhere.
 
 ## Try it
-- **Public page:** the hero, the live line counter and the line rules.
+- **Public page:** the hero, an urgent notice (only while one is posted), the live line
+  counter, the GroupMe / Instagram buttons and the line rules.
 - **Admin:** use the button in the footer (`admin.html`). The demo password is
   **`rowdydemo`**, also shown on the login form.
 - **Things to try:**
@@ -21,6 +22,9 @@ anywhere.
   - switch to the stadium count (orange) and type the admitted total;
   - press Capacity Reached;
   - undo either flag (two confirmations);
+  - post, edit and take down an urgent message (it shows in red under the
+    title, with the time it was posted or updated);
+  - change the GroupMe and Instagram links;
   - edit the line rules.
 
   Open the public page in a second tab to see changes there. Both tabs

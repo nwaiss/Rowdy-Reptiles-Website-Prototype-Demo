@@ -1,9 +1,12 @@
 /**
- * @file Public page script: keeps the line counter live and shows the rules.
+ * @file Public page script: keeps the line counter and the urgent notice
+ * live, and shows the GroupMe / Instagram links and the rules.
  *
- * Talks to two read-only endpoints:
- *   GET /api/line   { active, count, label, bandsOut, updatedAt }
- *   GET /api/rules  { rules: string[] }
+ * Talks to four read-only endpoints:
+ *   GET /api/line          { active, count, label, bandsOut, updatedAt }
+ *   GET /api/announcement  { announcement: { message, postedAt, updatedAt } | null }
+ *   GET /api/links         { groupme, instagram }  ('' = not set)
+ *   GET /api/rules         { rules: string[] }
  *
  * Polling pauses while the tab is hidden and catches up the moment it's
  * visible again. On game day thousands of phones have this page open in
@@ -26,6 +29,13 @@
     capacityNotice: document.getElementById('lineCapacityNotice'),
     note: document.getElementById('lineCounterNote'),
     rules: document.getElementById('rulesList'),
+    noticeSection: document.getElementById('noticeSection'),
+    noticeMessage: document.getElementById('noticeMessage'),
+    noticeTime: document.getElementById('noticeTime'),
+    socials: document.getElementById('socials'),
+    groupme: document.getElementById('groupmeLink'),
+    instagram: document.getElementById('instagramLink'),
+    instagramHandle: document.getElementById('instagramHandle'),
   };
 
   /**
@@ -110,13 +120,48 @@
     }
   }
 
+  // ---------- Urgent notice ----------
+  // Shown between the hero and the line counter only while officials have
+  // one posted; otherwise the section is hidden and the page looks as usual.
+
+  /** "10:30 PM" today, "Oct 27, 10:30 PM" on any other day. */
+  function formatStamp(iso) {
+    const date = new Date(iso);
+    const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (date.toDateString() === new Date().toDateString()) return time;
+    return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${time}`;
+  }
+
+  function renderNotice(notice) {
+    els.noticeSection.classList.toggle('hidden', !notice);
+    if (!notice) return;
+    // textContent (with CSS keeping line breaks): officers type free text.
+    els.noticeMessage.textContent = notice.message;
+    els.noticeTime.textContent = notice.updatedAt !== notice.postedAt
+      ? `Updated ${formatStamp(notice.updatedAt)}`
+      : `Posted ${formatStamp(notice.postedAt)}`;
+    els.noticeTime.title = `Posted ${new Date(notice.postedAt).toLocaleString()}`;
+  }
+
+  async function loadNotice() {
+    try {
+      renderNotice((await getJson('/api/announcement')).announcement);
+    } catch { /* keep whatever is showing; the next poll retries */ }
+  }
+
   // ---------- Polling (pauses in background tabs) ----------
   let pollTimer = null;
 
+  /** One poll: the count and the notice are both live. */
+  function refresh() {
+    loadLine();
+    loadNotice();
+  }
+
   function startPolling() {
     if (pollTimer) return;
-    loadLine();
-    pollTimer = setInterval(loadLine, POLL_MS);
+    refresh();
+    pollTimer = setInterval(refresh, POLL_MS);
   }
 
   function stopPolling() {
@@ -148,6 +193,35 @@
     }
   }
 
+  // ---------- GroupMe / Instagram ----------
+  // Officers can change both links; a blank one hides its button, and the
+  // whole section hides if both are blank.
+
+  /** "@ufrowdies" from an Instagram profile link, or '' if it isn't one. */
+  function instagramHandle(url) {
+    const { hostname, pathname } = new URL(url);
+    const match = /^\/([A-Za-z0-9._]+)\/?$/.exec(pathname);
+    return /(^|\.)instagram\.com$/i.test(hostname) && match ? `@${match[1]}` : '';
+  }
+
+  async function loadLinks() {
+    try {
+      const links = await getJson('/api/links');
+      els.groupme.classList.toggle('hidden', !links.groupme);
+      els.instagram.classList.toggle('hidden', !links.instagram);
+      if (links.groupme) els.groupme.href = links.groupme;
+      if (links.instagram) {
+        els.instagram.href = links.instagram;
+        const handle = instagramHandle(links.instagram);
+        if (handle) els.instagramHandle.textContent = handle;
+      }
+      els.socials.classList.toggle('hidden', !links.groupme && !links.instagram);
+    } catch {
+      els.socials.classList.add('hidden');
+    }
+  }
+
   loadRules();
+  loadLinks();
   if (!document.hidden) startPolling();
 })();

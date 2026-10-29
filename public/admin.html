@@ -113,10 +113,46 @@
             </div>
           </div>
 
+          <!-- Urgent message: shown on the home page between the title and
+               the line counter while one is posted. -->
+          <div class="admin-section">
+            <h3>Urgent Message</h3>
+            <p class="muted">Post an important message for everyone on the site. It appears in red right under the title, with the time it was posted.</p>
+            <div id="announcementLive" class="announcement-live hidden">
+              <div class="announcement-live-head">
+                <span>Showing now</span>
+                <span id="announcementLiveTime"></span>
+              </div>
+              <p id="announcementLiveText" class="announcement-live-text"></p>
+            </div>
+            <form id="announcementForm" class="stack-form">
+              <label for="announcementInput" id="announcementInputLabel">New message</label>
+              <textarea id="announcementInput" rows="4" maxlength="500" placeholder="e.g. Line check at 6:00 PM at Gate 3. Your whole group must be there." required></textarea>
+              <p class="muted char-count"><span id="announcementCount">0</span>/500</p>
+              <div class="announcement-actions">
+                <button type="submit" id="announcementPostBtn" class="btn btn-danger">Post Message</button>
+                <button type="button" id="announcementRemoveBtn" class="btn adjust-btn hidden">Take Down</button>
+              </div>
+            </form>
+          </div>
+
           <div class="admin-rules-entry">
             <h3>Line Rules</h3>
             <p class="muted">Change the official rules shown on the home page.</p>
             <button type="button" id="editRulesBtn" class="btn btn-accent">Edit Line Rules</button>
+          </div>
+
+          <!-- The "Stay Connected" buttons on the home page. -->
+          <div class="admin-section">
+            <h3>GroupMe &amp; Instagram</h3>
+            <p class="muted">Where the home page's "Join the GroupMe" and "Follow on Instagram" buttons go. Leave one blank to hide its button.</p>
+            <form id="linksForm" class="stack-form">
+              <label for="groupmeInput">GroupMe link</label>
+              <input id="groupmeInput" type="url" maxlength="300" placeholder="https://groupme.com/join_group/..." />
+              <label for="instagramInput">Instagram link</label>
+              <input id="instagramInput" type="url" maxlength="300" placeholder="https://www.instagram.com/..." />
+              <button type="submit" class="btn btn-accent">Save Links</button>
+            </form>
           </div>
 
           <!-- DEMO ONLY (not on the real site): stands in for students

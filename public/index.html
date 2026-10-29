@@ -18,8 +18,9 @@
   <a class="skip-link" href="#main">Skip to content</a>
 
   <main id="main">
-    <!-- The whole public site is this one page: hero banner, then the live
-         line counter, then the line rules. There is no header or nav. -->
+    <!-- The whole public site is this one page: hero banner, an urgent
+         notice (only when one is posted), the live line counter, the
+         GroupMe / Instagram links, then the line rules. No header or nav. -->
     <section id="home">
       <div class="jumbotron">
         <div class="jumbotron-inner">
@@ -28,13 +29,26 @@
                uncomment this line to bring the design back.
           <p class="kicker"><span>UF Gators Student Section</span></p>
           -->
-          <!-- Logo on the left, "Line Manager" in the old text-title style
-               on the right. Reads as "Rowdy Reptiles Line Manager". -->
+          <!-- Logo on the left, "Student / Line Manager" in the old
+               text-title style on the right. Reads as "Rowdy Reptiles
+               Student Line Manager". -->
           <h1 class="hero-heading">
             <img class="wordmark" src="logo-wordmark.png" alt="Rowdy Reptiles" width="848" height="585" />
-            <span class="hero-title">Line<br>Manager</span>
+            <span class="hero-title">Student<br>Line Manager</span>
           </h1>
           <p class="tagline">The official hype squad for the Florida Gators student section.</p>
+        </div>
+      </div>
+
+      <!-- Urgent notice from officials. Hidden unless one is posted, so
+           the page looks exactly the same without it. Filled by app.js. -->
+      <div id="noticeSection" class="panel notice-section hidden">
+        <div class="notice-card" role="region" aria-labelledby="noticeTitle">
+          <div class="notice-head">
+            <span id="noticeTitle" class="notice-title">Important Notice</span>
+            <span id="noticeTime" class="notice-time"></span>
+          </div>
+          <p id="noticeMessage" class="notice-message" aria-live="polite"></p>
         </div>
       </div>
 
@@ -56,6 +70,23 @@
         </div>
         <p id="lineCounterNote" class="muted">Updates automatically while this page is open.</p>
         <p class="muted">Only 500 wristbands are given out, even though the lower bowl seats 700 students — get here early to make sure you get one.</p>
+      </div>
+
+      <!-- GroupMe and Instagram buttons. The links come from /api/links,
+           so officers can change them; a blank link hides its button. -->
+      <div id="socials" class="panel home-section hidden">
+        <h2>Stay Connected</h2>
+        <p class="muted socials-intro">Get line updates and game-day news first.</p>
+        <div class="socials-links">
+          <a id="groupmeLink" class="social-btn social-groupme hidden" target="_blank" rel="noopener noreferrer">
+            <span class="social-btn-main">Join the GroupMe</span>
+            <span class="social-btn-sub">Game-day chat and line updates</span>
+          </a>
+          <a id="instagramLink" class="social-btn social-instagram hidden" target="_blank" rel="noopener noreferrer">
+            <span class="social-btn-main">Follow on Instagram</span>
+            <span id="instagramHandle" class="social-btn-sub">Photos, hype and announcements</span>
+          </a>
+        </div>
       </div>
 
       <div id="lineRules" class="panel home-section">

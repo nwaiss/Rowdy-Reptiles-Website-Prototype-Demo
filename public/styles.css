@@ -53,6 +53,8 @@
   --gator-orange: #fa4616;
   --gator-blue: #0021a5;
   --amber: #ffb020;
+  /* The urgent notice (see .notice-card). White text on it passes WCAG AA. */
+  --alert-red: #c62828;
   --text: #1c2136;
   --text-muted: #5b6178;
   --border: #e2e4f0;
@@ -223,7 +225,8 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   flex: none;
   filter: drop-shadow(3px 4px 0 rgba(10, 20, 66, 0.55));
 }
-/* The old "ROWDY REPTILES" text-title treatment, now on "LINE MANAGER":
+/* The old "ROWDY REPTILES" text-title treatment, now on "STUDENT / LINE
+   MANAGER" (two lines; nowrap keeps "Line Manager" on one):
    Anton, white fill, orange outline, forward lean, stacked navy/black drop
    shadow — a generic sports-graphics technique in the club's own colors. */
 .hero-title {
@@ -238,6 +241,7 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   text-stroke: 1.5px var(--orange);
   text-shadow: 3px 3px 0 var(--navy-deep), 6px 6px 0 rgba(0,0,0,0.35);
   paint-order: stroke fill;
+  white-space: nowrap;
 }
 .jumbotron .tagline { color: rgba(255,255,255,0.85); }
 .tagline { font-size: clamp(1rem, calc(3.2svh / var(--zoom-factor)), 1.4rem); line-height: 1.4; margin: 0; font-weight: 600; }
@@ -269,14 +273,114 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   padding-top: clamp(10px, calc(2.5svh / var(--zoom-factor)), 32px);
   padding-bottom: clamp(10px, calc(2.5svh / var(--zoom-factor)), 32px);
 }
-/* Both section headings share the same size and gap below them, so
-   "Line Rules" matches "Game Line Counter". */
-#lineCounter h2, #lineRules h2 {
+/* All section headings share the same size and gap below them, so
+   "Stay Connected" and "Line Rules" match "Game Line Counter". */
+#lineCounter h2, #socials h2, #lineRules h2 {
   font-size: clamp(1.4rem, calc(4.5svh / var(--zoom-factor)), 2.2rem);
   line-height: 1.2;
   margin-bottom: clamp(8px, calc(2svh / var(--zoom-factor)), 24px);
 }
 #lineCounter .muted { margin: clamp(2px, calc(0.8svh / var(--zoom-factor)), 10px) auto 0; max-width: 60ch; line-height: 1.35; font-size: 0.85rem; }
+
+/* ---------- Urgent notice ----------
+   Officials' urgent message, between the hero and the line counter. Only
+   shown while one is posted. Loud frame (red header bar, red border) so it
+   can't be missed, but the message itself is plain dark text on white at a
+   comfortable size, so it's easy to read. */
+.notice-section { padding-top: clamp(14px, calc(3svh / var(--zoom-factor)), 28px); }
+.notice-card {
+  max-width: 480px; /* same width as the scoreboard */
+  margin: 0 auto;
+  background: var(--surface);
+  border: 2px solid var(--alert-red);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px -14px rgba(198, 40, 40, 0.55);
+  overflow: hidden;
+  text-align: left;
+}
+.notice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  flex-wrap: wrap;
+  padding: 8px 16px;
+  background: var(--alert-red);
+  color: #fff;
+}
+.notice-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 1.05rem;
+}
+/* A small "!" badge, drawn in CSS so no icon file is needed. */
+.notice-title::before {
+  content: '!';
+  display: inline-grid;
+  place-items: center;
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--alert-red);
+  font-size: 0.9em;
+  line-height: 1;
+}
+.notice-time {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.92);
+}
+.notice-message {
+  margin: 0;
+  padding: 14px 16px 16px;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: pre-line; /* keeps the officer's line breaks */
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Stay Connected (GroupMe / Instagram) ----------
+   Two big tap targets between the line counter and the rules, as wide as
+   the scoreboard. Club colors, no third-party logos. */
+.socials-intro { margin: -8px auto 16px; }
+.socials-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.social-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 20px;
+  border-radius: var(--radius);
+  color: #fff;
+  line-height: 1.25;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.social-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.social-btn:active { transform: translateY(2px); }
+.social-btn-main {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 1.3rem;
+}
+.social-btn-sub { font-size: 0.85rem; font-weight: 600; opacity: 0.9; }
+.social-groupme { background: var(--navy); box-shadow: 0 4px 0 var(--navy-deep); }
+.social-instagram { background: var(--orange); color: var(--navy-deep); box-shadow: 0 4px 0 var(--orange-dark); }
 
 /* ---------- Line rules ---------- */
 /* Last section of the home page, below the line counter. Heading
@@ -475,8 +579,10 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   h1 { font-size: 3rem; }
   h2 { font-size: 1.9rem; }
   .jumbotron { padding-left: 20px; padding-right: 20px; }
-  /* Smaller than desktop so logo + title fit side by side on a phone. */
-  .hero-heading { --mark-h: clamp(4rem, 16svh, 5.75rem); }
+  /* Smaller than desktop so logo + title fit side by side on a phone. The
+     18vw cap keeps "LINE MANAGER" from running off narrow screens (the
+     whole lockup is about 4x --mark-h wide). */
+  .hero-heading { --mark-h: clamp(3.25rem, min(16svh, 18vw), 5.75rem); }
   main { padding: 0 0 56px; }
   .panel { padding: 0 20px; }
   .line-count { font-size: clamp(2.5rem, 9svh, 4.5rem); }

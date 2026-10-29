@@ -36,6 +36,8 @@
     admin: 'rr_demo_admin_v1',
     rules: 'rr_demo_rules_v1',
     sheet: 'rr_demo_sheet_v1', // the simulated Google Sheet (see below)
+    announcement: 'rr_demo_announcement_v1',
+    links: 'rr_demo_links_v1',
   };
 
   /** Public demo credential, also shown on the login form. */
@@ -76,6 +78,55 @@
   function readRules() {
     const saved = readJson(STORAGE.rules, null);
     return Array.isArray(saved) && saved.length ? saved : [...DEFAULT_RULES];
+  }
+
+  // =====================================================================
+  // Urgent announcement
+  // =====================================================================
+  // One message at a time, or none. postedAt is when it first went up;
+  // updatedAt changes on every edit, so the page can say "Updated 10:45 PM".
+
+  const MAX_ANNOUNCEMENT_LENGTH = 500;
+
+  function readAnnouncement() {
+    const saved = readJson(STORAGE.announcement, null);
+    return saved && typeof saved.message === 'string' && saved.message ? saved : null;
+  }
+
+  /** Trims, keeps single line breaks (at most one blank line in a row). */
+  function cleanMessage(value) {
+    if (typeof value !== 'string') return '';
+    return value
+      .replace(/\r\n?/g, '\n')
+      .split('\n').map((l) => l.replace(/[ \t]+/g, ' ').trim()).join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  // =====================================================================
+  // GroupMe / Instagram links
+  // =====================================================================
+
+  const MAX_LINK_LENGTH = 300;
+  const DEFAULT_LINKS = Object.freeze({
+    groupme: 'https://groupme.com/join_group/116575366/kZpOhwst',
+    instagram: 'https://www.instagram.com/ufrowdies/?hl=en',
+  });
+
+  function readLinks() {
+    const saved = readJson(STORAGE.links, null);
+    return saved && typeof saved === 'object' ? { ...DEFAULT_LINKS, ...saved } : { ...DEFAULT_LINKS };
+  }
+
+  /** '' (hides the button) or a full https:// link; anything else is refused. */
+  function parseLink(raw, name) {
+    const value = typeof raw === 'string' ? raw.trim() : '';
+    if (!value) return '';
+    let url;
+    try { url = new URL(value); } catch { throw new ApiError(`The ${name} link isn't a valid web address.`); }
+    if (url.protocol !== 'https:') throw new ApiError(`The ${name} link must start with https://`);
+    if (value.length > MAX_LINK_LENGTH) throw new ApiError(`The ${name} link is too long.`);
+    return url.href;
   }
 
   // =====================================================================
@@ -253,6 +304,8 @@
     // Public
     'GET line': () => adminView(),
     'GET rules': () => ({ rules: readRules() }),
+    'GET announcement': () => ({ announcement: readAnnouncement() }),
+    'GET links': () => readLinks(),
 
     // Session
     'GET session': () => ({ isAdmin: isAdmin() }),
@@ -322,6 +375,26 @@
       saveSim({ auto: body.auto, since: body.auto && readLine().active ? new Date().toISOString() : null });
       return simView();
     }),
+
+    // Urgent announcement
+    'PUT announcement': admin((body) => {
+      const message = cleanMessage(body.message);
+      if (!message) throw new ApiError('Type a message first.');
+      if (message.length > MAX_ANNOUNCEMENT_LENGTH) throw new ApiError(`Keep the message under ${MAX_ANNOUNCEMENT_LENGTH} characters.`);
+      const now = new Date().toISOString();
+      const current = readAnnouncement();
+      return { announcement: writeJson(STORAGE.announcement, { message, postedAt: current ? current.postedAt : now, updatedAt: now }) };
+    }),
+    'DELETE announcement': admin(() => {
+      try { localStorage.removeItem(STORAGE.announcement); } catch { /* ignore */ }
+      return { announcement: null };
+    }),
+
+    // Links
+    'PUT links': admin((body) => writeJson(STORAGE.links, {
+      groupme: parseLink(body.groupme, 'GroupMe'),
+      instagram: parseLink(body.instagram, 'Instagram'),
+    })),
 
     // Rules
     'PUT rules': admin((body) => {

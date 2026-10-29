@@ -9,8 +9,10 @@
  *   1. Helpers (DOM, toasts, API calls, confirm dialog, busy buttons)
  *   2. Session (login / logout)
  *   3. Line control
- *   4. Polling
- *   5. Line rules editor
+ *   4. Urgent message
+ *   5. GroupMe / Instagram links
+ *   6. Polling
+ *   7. Line rules editor
  */
 (function () {
   'use strict';
@@ -24,6 +26,8 @@
     line: null,
     /** The rules as currently published, for detecting unsaved edits. */
     rules: [],
+    /** The urgent message as currently posted, or null. */
+    announcement: null,
   };
 
   // =====================================================================
@@ -182,6 +186,7 @@
     $('#adminLoggedOut').classList.add('hidden');
     $('#adminLoggedIn').classList.remove('hidden');
     loadRules();
+    loadLinks();
     startPolling();
   }
 
@@ -455,14 +460,163 @@
   });
 
   // =====================================================================
-  // 4. Polling (only while logged in and the tab is visible)
+  // 4. Urgent message
+  // =====================================================================
+  // One message at a time. Posting while one is up replaces it (the home
+  // page then says "Updated" with the new time); Take Down removes it and
+  // the home page goes back to normal.
+
+  /** "Oct 28, 10:30 PM" */
+  function formatStamp(iso) {
+    return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+
+  /** What was last put in the text box from the server, to spot officer edits. */
+  let announcementPrefill = '';
+
+  function updateAnnouncementCount() {
+    $('#announcementCount').textContent = $('#announcementInput').value.length;
+  }
+
+  function renderAnnouncement(announcement) {
+    const previous = state.announcement;
+    state.announcement = announcement;
+    const live = Boolean(announcement);
+    showIf('#announcementLive', live);
+    showIf('#announcementRemoveBtn', live);
+    $('#announcementPostBtn').textContent = live ? 'Update Message' : 'Post Message';
+    $('#announcementInputLabel').textContent = live ? 'Edit the message' : 'New message';
+    if (live) {
+      $('#announcementLiveText').textContent = announcement.message;
+      $('#announcementLiveTime').textContent = announcement.updatedAt !== announcement.postedAt
+        ? `Updated ${formatStamp(announcement.updatedAt)}`
+        : `Posted ${formatStamp(announcement.postedAt)}`;
+    }
+    // Load the live message into the box for editing, unless the officer
+    // has already started typing something else.
+    const input = $('#announcementInput');
+    if (previous?.updatedAt !== announcement?.updatedAt && input.value === announcementPrefill) {
+      announcementPrefill = live ? announcement.message : '';
+      input.value = announcementPrefill;
+      updateAnnouncementCount();
+    }
+  }
+
+  async function loadAnnouncement() {
+    if (!state.isAdmin) return;
+    try {
+      renderAnnouncement((await api('/api/announcement')).announcement);
+    } catch { /* the next poll retries */ }
+  }
+
+  $('#announcementInput').addEventListener('input', updateAnnouncementCount);
+
+  $('#announcementForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const button = $('#announcementPostBtn');
+    const message = $('#announcementInput').value.trim();
+    if (!message) { toast('Type a message first.', 'error'); return; }
+    const updating = Boolean(state.announcement);
+    if (updating && message === state.announcement.message) { toast('No changes to post.'); return; }
+    const confirmed = await confirmAction(updating
+      ? {
+        title: 'Update the urgent message?',
+        message: `Everyone on the site will see the new wording, marked with the time it was updated:\n\n${message}`,
+        confirmLabel: 'Update',
+        tone: 'danger',
+      }
+      : {
+        title: 'Post this urgent message?',
+        message: `It will show in red at the top of the home page for everyone, with the time it was posted:\n\n${message}`,
+        confirmLabel: 'Post',
+        tone: 'danger',
+      });
+    if (!confirmed) return;
+    await withBusy(button, async () => {
+      try {
+        const { announcement } = await api('api/announcement', 'PUT', { message });
+        // The box now matches what's live, so later polls may refresh it.
+        announcementPrefill = $('#announcementInput').value = announcement.message;
+        updateAnnouncementCount();
+        renderAnnouncement(announcement);
+        toast(updating ? 'Message updated.' : 'Message posted.', 'success');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+  });
+
+  $('#announcementRemoveBtn').addEventListener('click', async (e) => {
+    const button = e.currentTarget;
+    const confirmed = await confirmAction({
+      title: 'Take down the urgent message?',
+      message: 'It will disappear from the home page, which goes back to normal.',
+      confirmLabel: 'Take Down',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+    await withBusy(button, async () => {
+      try {
+        await api('api/announcement', 'DELETE', {});
+        renderAnnouncement(null);
+        toast('Message taken down.', 'success');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+  });
+
+  // =====================================================================
+  // 5. GroupMe / Instagram links
+  // =====================================================================
+
+  async function loadLinks() {
+    try {
+      const links = await api('/api/links');
+      $('#groupmeInput').value = links.groupme;
+      $('#instagramInput').value = links.instagram;
+    } catch { /* the boxes stay empty; saving still works */ }
+  }
+
+  $('#linksForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const button = e.submitter || $('#linksForm button');
+    const confirmed = await confirmAction({
+      title: 'Save these links?',
+      message: 'The home page\'s GroupMe and Instagram buttons will go to these addresses for everyone. A blank link hides its button.',
+      confirmLabel: 'Save',
+    });
+    if (!confirmed) return;
+    await withBusy(button, async () => {
+      try {
+        const links = await api('api/links', 'PUT', {
+          groupme: $('#groupmeInput').value,
+          instagram: $('#instagramInput').value,
+        });
+        $('#groupmeInput').value = links.groupme;
+        $('#instagramInput').value = links.instagram;
+        toast('Links saved.', 'success');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+  });
+
+  // =====================================================================
+  // 6. Polling (only while logged in and the tab is visible)
   // =====================================================================
   let pollTimer = null;
 
+  /** One poll: the line and the urgent message (another officer may change either). */
+  function refresh() {
+    loadLine();
+    loadAnnouncement();
+  }
+
   function startPolling() {
     if (pollTimer || !state.isAdmin || document.hidden) return;
-    loadLine();
-    pollTimer = setInterval(loadLine, POLL_MS);
+    refresh();
+    pollTimer = setInterval(refresh, POLL_MS);
   }
 
   function stopPolling() {
@@ -476,7 +630,7 @@
   });
 
   // =====================================================================
-  // 5. Line rules editor
+  // 7. Line rules editor
   // =====================================================================
 
   async function loadRules() {
