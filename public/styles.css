@@ -387,6 +387,10 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 .social-icon { width: 2.4rem; height: 2.4rem; }
 /* Bottom row: Instagram's @handle, or the GroupMe link (filled by app.js). */
 .social-btn-foot { font-weight: 800; font-size: 0.9rem; overflow-wrap: break-word; min-width: 0; max-width: 100%; }
+/* The long GroupMe link is set small and the short @handle large, so the
+   two bottom lines take up about the same space. */
+#groupmeAddress { font-size: 0.72rem; font-weight: 700; opacity: 0.9; }
+#instagramHandle { font-size: 1.2rem; }
 .social-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
 .social-btn:active { transform: translateY(2px); }
 .social-btn-main {
