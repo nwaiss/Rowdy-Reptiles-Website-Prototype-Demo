@@ -36,6 +36,7 @@
     groupme: document.getElementById('groupmeLink'),
     instagram: document.getElementById('instagramLink'),
     instagramHandle: document.getElementById('instagramHandle'),
+    groupmeAddress: document.getElementById('groupmeAddress'),
   };
 
   /**
@@ -209,11 +210,16 @@
       const links = await getJson('/api/links');
       els.groupme.classList.toggle('hidden', !links.groupme);
       els.instagram.classList.toggle('hidden', !links.instagram);
-      if (links.groupme) els.groupme.href = links.groupme;
+      if (links.groupme) {
+        els.groupme.href = links.groupme;
+        // The link itself, minus https:// and www., on the card's last line.
+        // A <wbr> after each "/" lets a narrow card wrap it there, not mid-word.
+        const parts = links.groupme.replace(/^https:\/\/(www\.)?/, '').split(/(?<=\/)/);
+        els.groupmeAddress.replaceChildren(...parts.flatMap((part) => [part, document.createElement('wbr')]));
+      }
       if (links.instagram) {
         els.instagram.href = links.instagram;
-        const handle = instagramHandle(links.instagram);
-        if (handle) els.instagramHandle.textContent = handle;
+        els.instagramHandle.textContent = instagramHandle(links.instagram); // '' if not a profile link
       }
       els.socials.classList.toggle('hidden', !links.groupme && !links.instagram);
     } catch {

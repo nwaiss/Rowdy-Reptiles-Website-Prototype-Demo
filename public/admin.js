@@ -177,6 +177,7 @@
     state.isAdmin = false;
     stopPolling();
     closeRulesEditor();
+    closeLinksEditor();
     $('#adminLoggedIn').classList.add('hidden');
     $('#adminLoggedOut').classList.remove('hidden');
   }
@@ -186,7 +187,6 @@
     $('#adminLoggedOut').classList.add('hidden');
     $('#adminLoggedIn').classList.remove('hidden');
     loadRules();
-    loadLinks();
     startPolling();
   }
 
@@ -570,17 +570,64 @@
   // 5. GroupMe / Instagram links
   // =====================================================================
 
-  async function loadLinks() {
-    try {
-      const links = await api('/api/links');
-      $('#groupmeInput').value = links.groupme;
-      $('#instagramInput').value = links.instagram;
-    } catch { /* the boxes stay empty; saving still works */ }
+  // Edited in their own view (like the rules), opened from "Edit Links".
+
+  /** The links as currently published, for detecting unsaved edits. */
+  let savedLinks = null;
+
+  function editorLinks() {
+    return { groupme: $('#groupmeInput').value.trim(), instagram: $('#instagramInput').value.trim() };
   }
+
+  function hasUnsavedLinkChanges() {
+    return JSON.stringify(editorLinks()) !== JSON.stringify(savedLinks);
+  }
+
+  async function openLinksEditor() {
+    try {
+      savedLinks = await api('/api/links');
+    } catch {
+      toast('Could not load the current links. Try again.', 'error');
+      return;
+    }
+    $('#groupmeInput').value = savedLinks.groupme;
+    $('#instagramInput').value = savedLinks.instagram;
+    $('#adminMain').classList.add('hidden');
+    $('#linksEditor').classList.remove('hidden');
+    window.scrollTo(0, 0);
+  }
+
+  function closeLinksEditor() {
+    $('#linksEditor').classList.add('hidden');
+    $('#adminMain').classList.remove('hidden');
+  }
+
+  $('#editLinksBtn').addEventListener('click', async () => {
+    const confirmed = await confirmAction({
+      title: 'Edit the links?',
+      message: 'You\'ll be able to change where the home page\'s GroupMe and Instagram buttons go.',
+      confirmLabel: 'Open Editor',
+    });
+    if (confirmed) openLinksEditor();
+  });
+
+  $('#cancelLinksBtn').addEventListener('click', async () => {
+    if (hasUnsavedLinkChanges()) {
+      const discard = await confirmAction({
+        title: 'Discard your changes?',
+        message: 'The links will stay exactly as they are now.',
+        confirmLabel: 'Discard',
+        tone: 'danger',
+      });
+      if (!discard) return;
+    }
+    closeLinksEditor();
+  });
 
   $('#linksForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const button = e.submitter || $('#linksForm button');
+    const button = $('#saveLinksBtn');
+    if (!hasUnsavedLinkChanges()) { toast('No changes to save.'); closeLinksEditor(); return; }
     const confirmed = await confirmAction({
       title: 'Save these links?',
       message: 'The home page\'s GroupMe and Instagram buttons will go to these addresses for everyone. A blank link hides its button.',
@@ -589,12 +636,8 @@
     if (!confirmed) return;
     await withBusy(button, async () => {
       try {
-        const links = await api('api/links', 'PUT', {
-          groupme: $('#groupmeInput').value,
-          instagram: $('#instagramInput').value,
-        });
-        $('#groupmeInput').value = links.groupme;
-        $('#instagramInput').value = links.instagram;
+        savedLinks = await api('api/links', 'PUT', editorLinks());
+        closeLinksEditor();
         toast('Links saved.', 'success');
       } catch (err) {
         toast(err.message, 'error');

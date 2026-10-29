@@ -225,8 +225,8 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   flex: none;
   filter: drop-shadow(3px 4px 0 rgba(10, 20, 66, 0.55));
 }
-/* The old "ROWDY REPTILES" text-title treatment, now on "STUDENT / LINE
-   MANAGER" (two lines; nowrap keeps "Line Manager" on one):
+/* The old "ROWDY REPTILES" text-title treatment, now on "STUDENT LINE /
+   MANAGER" (two lines; nowrap keeps "Student Line" on one):
    Anton, white fill, orange outline, forward lean, stacked navy/black drop
    shadow — a generic sports-graphics technique in the club's own colors. */
 .hero-title {
@@ -350,35 +350,53 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 }
 
 /* ---------- Stay Connected (GroupMe / Instagram) ----------
-   Two big tap targets between the line counter and the rules, as wide as
-   the scoreboard. Club colors, no third-party logos. */
-.socials-intro { margin: -8px auto 16px; }
+   Two cards side by side (GroupMe left, Instagram right) between the line
+   counter and the rules, together as wide as the scoreboard. Each is an
+   icon, a title and a one-line reason to tap. Club colors; the icons are
+   generic (camera, chat bubble), not the companies' logos. If one link is
+   blank its card hides and the other fills the row (auto-fit drops the
+   empty column).
+
+   Each card has four invisible rows: icon / title / description /
+   Instagram's @handle or the GroupMe link. The rows are shared by both cards (subgrid), so if one
+   title wraps or has a handle under it, the other card's description
+   and bottom line still start at the same height. */
 .socials-links {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-template-rows: auto auto auto auto;
+  gap: 0 12px;
   max-width: 480px;
   margin: 0 auto;
 }
 .social-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 14px 20px;
+  grid-row: span 4;
+  display: grid;
+  grid-template-rows: subgrid;
+  justify-items: center;
+  align-content: start;
+  row-gap: 10px;
+  min-width: 0;
+  padding: 16px 14px 18px;
   border-radius: var(--radius);
   color: #fff;
   line-height: 1.25;
   transition: transform 0.12s ease, filter 0.12s ease;
 }
+.social-btn-top { display: flex; justify-content: center; }
+.social-icon { width: 2.4rem; height: 2.4rem; }
+/* Bottom row: Instagram's @handle, or the GroupMe link (filled by app.js). */
+.social-btn-foot { font-weight: 800; font-size: 0.9rem; overflow-wrap: break-word; min-width: 0; max-width: 100%; }
 .social-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
 .social-btn:active { transform: translateY(2px); }
 .social-btn-main {
   font-family: var(--font-display);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+  line-height: 1.1;
 }
-.social-btn-sub { font-size: 0.85rem; font-weight: 600; opacity: 0.9; }
+.social-btn-sub { font-size: 0.85rem; font-weight: 600; opacity: 0.92; }
 .social-groupme { background: var(--navy); box-shadow: 0 4px 0 var(--navy-deep); }
 .social-instagram { background: var(--orange); color: var(--navy-deep); box-shadow: 0 4px 0 var(--orange-dark); }
 
@@ -580,13 +598,17 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   h2 { font-size: 1.9rem; }
   .jumbotron { padding-left: 20px; padding-right: 20px; }
   /* Smaller than desktop so logo + title fit side by side on a phone. The
-     18vw cap keeps "LINE MANAGER" from running off narrow screens (the
+     18vw cap keeps "STUDENT LINE" from running off narrow screens (the
      whole lockup is about 4x --mark-h wide). */
   .hero-heading { --mark-h: clamp(3.25rem, min(16svh, 18vw), 5.75rem); }
   main { padding: 0 0 56px; }
   .panel { padding: 0 20px; }
   .line-count { font-size: clamp(2.5rem, 9svh, 4.5rem); }
   .scoreboard { padding-left: 20px; padding-right: 20px; }
+  .socials-links { gap: 0 10px; }
+  .social-btn { padding: 14px 10px 16px; }
+  .social-btn-main { font-size: 1.05rem; }
+  .social-btn-sub { font-size: 0.8rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

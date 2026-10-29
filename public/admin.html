@@ -142,17 +142,12 @@
             <button type="button" id="editRulesBtn" class="btn btn-accent">Edit Line Rules</button>
           </div>
 
-          <!-- The "Stay Connected" buttons on the home page. -->
+          <!-- The "Stay Connected" buttons on the home page. Like the
+               rules, the links are changed in their own editor view. -->
           <div class="admin-section">
             <h3>GroupMe &amp; Instagram</h3>
-            <p class="muted">Where the home page's "Join the GroupMe" and "Follow on Instagram" buttons go. Leave one blank to hide its button.</p>
-            <form id="linksForm" class="stack-form">
-              <label for="groupmeInput">GroupMe link</label>
-              <input id="groupmeInput" type="url" maxlength="300" placeholder="https://groupme.com/join_group/..." />
-              <label for="instagramInput">Instagram link</label>
-              <input id="instagramInput" type="url" maxlength="300" placeholder="https://www.instagram.com/..." />
-              <button type="submit" class="btn btn-accent">Save Links</button>
-            </form>
+            <p class="muted">Change where the home page's GroupMe and Instagram buttons go.</p>
+            <button type="button" id="editLinksBtn" class="btn btn-accent">Edit Links</button>
           </div>
 
           <!-- DEMO ONLY (not on the real site): stands in for students
@@ -190,6 +185,24 @@
             <button type="button" id="cancelRulesBtn" class="btn adjust-btn">Cancel</button>
             <button type="button" id="saveRulesBtn" class="btn btn-accent">Save Rules</button>
           </div>
+        </div>
+
+        <!-- Links editor, opened from "Edit Links". Works like the rule
+             editor: confirm to open, confirm to save, and Cancel asks
+             before throwing away changes. -->
+        <div id="linksEditor" class="rules-editor hidden">
+          <h3>Edit Links</h3>
+          <p class="muted">Where the home page's "Join the GroupMe" and "Follow on Instagram" buttons go. Leave one blank to hide its button. Nothing changes on the site until you press Save.</p>
+          <form id="linksForm" class="stack-form">
+            <label for="groupmeInput">GroupMe link</label>
+            <input id="groupmeInput" type="url" maxlength="300" placeholder="https://groupme.com/join_group/..." />
+            <label for="instagramInput">Instagram link</label>
+            <input id="instagramInput" type="url" maxlength="300" placeholder="https://www.instagram.com/..." />
+            <div class="rules-editor-actions">
+              <button type="button" id="cancelLinksBtn" class="btn adjust-btn">Cancel</button>
+              <button type="submit" id="saveLinksBtn" class="btn btn-accent">Save Links</button>
+            </div>
+          </form>
         </div>
       </div>
     </section>
