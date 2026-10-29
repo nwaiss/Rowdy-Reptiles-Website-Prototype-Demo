@@ -222,6 +222,25 @@
 }
 .admin-rules-entry p { margin: 0 0 12px; }
 
+/* Line counter subtext: between End This Line and the mode switch. */
+.subtext-entry {
+  margin-top: 24px;
+  padding-top: 8px;
+  border-top: 2px dashed rgba(10, 20, 66, 0.15);
+}
+.subtext-entry h3 { margin: 12px 0 4px; }
+.subtext-entry > p { margin: 0 0 10px; }
+.subtext-entry .subtext-current {
+  margin: 0 auto 12px;
+  max-width: 420px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.subtext-entry .subtext-current.empty { color: var(--text-muted); font-style: italic; }
+
 /* Urgent message and GroupMe/Instagram links: same divider as Line Rules. */
 .admin-section {
   margin-top: 28px;
@@ -248,7 +267,7 @@
 .announcement-live {
   margin: 12px auto 0;
   max-width: 420px;
-  border: 2px solid #c62828;
+  border: 2px solid var(--alert-red);
   border-radius: var(--radius-sm);
   background: var(--surface);
   text-align: left;
@@ -260,7 +279,7 @@
   gap: 8px;
   flex-wrap: wrap;
   padding: 4px 10px;
-  background: #c62828;
+  background: var(--alert-red);
   color: #fff;
   font-size: 0.8rem;
   font-weight: 700;

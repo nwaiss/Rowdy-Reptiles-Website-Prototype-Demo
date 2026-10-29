@@ -22,7 +22,7 @@
   -->
   <main id="main">
     <section id="admin" class="tab panel">
-      <a href="./" class="back-link">&larr; Back to site</a>
+      <a href="index.html" class="back-link">&larr; Back to site</a>
 
       <div id="adminLoggedOut" class="hidden">
         <h2>Admin Login</h2>
@@ -106,6 +106,15 @@
               <button type="button" id="stopLineBtn" class="btn btn-danger">End This Line</button>
             </div>
 
+            <!-- The note under the public line counter (the wristband
+                 reminder). Edited in its own view, like the rules. -->
+            <div class="subtext-entry">
+              <h3>Line Counter Subtext</h3>
+              <p class="muted">The note shown under the line counter on the home page.</p>
+              <p id="subtextCurrent" class="subtext-current"></p>
+              <button type="button" id="editSubtextBtn" class="btn btn-accent">Edit Subtext</button>
+            </div>
+
             <!-- Bottom of the line section, just above Line Rules: switches
                  what the public counter shows. Its label flips per mode. -->
             <div class="mode-switch">
@@ -185,6 +194,22 @@
             <button type="button" id="cancelRulesBtn" class="btn adjust-btn">Cancel</button>
             <button type="button" id="saveRulesBtn" class="btn btn-accent">Save Rules</button>
           </div>
+        </div>
+
+        <!-- Line counter subtext editor, opened from "Edit Subtext". Works
+             like the rule editor. -->
+        <div id="subtextEditor" class="rules-editor hidden">
+          <h3>Edit Line Counter Subtext</h3>
+          <p class="muted">This note shows under the line counter on the home page. Leave it blank to hide it. Nothing changes on the site until you press Save.</p>
+          <form id="subtextForm" class="stack-form">
+            <label for="subtextInput">Subtext</label>
+            <textarea id="subtextInput" rows="4" maxlength="300"></textarea>
+            <p class="muted char-count"><span id="subtextCount">0</span>/300</p>
+            <div class="rules-editor-actions">
+              <button type="button" id="cancelSubtextBtn" class="btn adjust-btn">Cancel</button>
+              <button type="submit" id="saveSubtextBtn" class="btn btn-accent">Save Subtext</button>
+            </div>
+          </form>
         </div>
 
         <!-- Links editor, opened from "Edit Links". Works like the rule

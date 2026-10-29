@@ -11,8 +11,9 @@
  *   3. Line control
  *   4. Urgent message
  *   5. GroupMe / Instagram links
- *   6. Polling
- *   7. Line rules editor
+ *   6. Line counter subtext
+ *   7. Polling
+ *   8. Line rules editor
  */
 (function () {
   'use strict';
@@ -178,6 +179,7 @@
     stopPolling();
     closeRulesEditor();
     closeLinksEditor();
+    closeSubtextEditor();
     $('#adminLoggedIn').classList.add('hidden');
     $('#adminLoggedOut').classList.remove('hidden');
   }
@@ -187,6 +189,7 @@
     $('#adminLoggedOut').classList.add('hidden');
     $('#adminLoggedIn').classList.remove('hidden');
     loadRules();
+    loadSubtext();
     startPolling();
   }
 
@@ -287,6 +290,8 @@
     setUndoableFlag('#noMoreBandsBtn', line.bandsOut, 'No More Bands', 'Undo No More Bands');
     setUndoableFlag('#capacityReachedBtn', line.capacityReached, 'Capacity Reached', 'Undo Capacity Reached');
     $('#modeSwitchBtn').textContent = admitted ? 'Back to Line Count' : 'Switch to Stadium Count';
+    // The urgent message comes with every line response (one poll, not two).
+    renderAnnouncement(line.announcement || null);
   }
 
   /**
@@ -306,6 +311,15 @@
   // never overwrites a newer one, so the count can't jump backwards.
   let lineRequestSeq = 0;
   let lineRenderedSeq = 0;
+
+  /**
+   * After a change made outside lineRequest (posting the urgent message),
+   * ignore any line poll already in flight: it was answered before the
+   * change and would briefly show the old state.
+   */
+  function skipInFlightLineRequests() {
+    lineRenderedSeq = ++lineRequestSeq;
+  }
 
   /**
    * Sends a line request and renders the result if it's still the newest.
@@ -502,13 +516,6 @@
     }
   }
 
-  async function loadAnnouncement() {
-    if (!state.isAdmin) return;
-    try {
-      renderAnnouncement((await api('/api/announcement')).announcement);
-    } catch { /* the next poll retries */ }
-  }
-
   $('#announcementInput').addEventListener('input', updateAnnouncementCount);
 
   $('#announcementForm').addEventListener('submit', async (e) => {
@@ -538,6 +545,7 @@
         // The box now matches what's live, so later polls may refresh it.
         announcementPrefill = $('#announcementInput').value = announcement.message;
         updateAnnouncementCount();
+        skipInFlightLineRequests();
         renderAnnouncement(announcement);
         toast(updating ? 'Message updated.' : 'Message posted.', 'success');
       } catch (err) {
@@ -558,6 +566,7 @@
     await withBusy(button, async () => {
       try {
         await api('api/announcement', 'DELETE', {});
+        skipInFlightLineRequests();
         renderAnnouncement(null);
         toast('Message taken down.', 'success');
       } catch (err) {
@@ -646,20 +655,113 @@
   });
 
   // =====================================================================
-  // 6. Polling (only while logged in and the tab is visible)
+  // 6. Line counter subtext
+  // =====================================================================
+  // The note under the public counter. Edited in its own view, like the
+  // rules, opened from "Edit Subtext" in the line section.
+
+  /** The subtext as currently published, for detecting unsaved edits. */
+  let savedSubtext = '';
+
+  function renderSubtextCurrent() {
+    const el = $('#subtextCurrent');
+    el.textContent = savedSubtext || '(hidden: no subtext set)';
+    el.classList.toggle('empty', !savedSubtext);
+  }
+
+  async function loadSubtext() {
+    try {
+      savedSubtext = (await api('/api/subtext')).subtext;
+      renderSubtextCurrent();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** The editor's text, tidied the same way the server tidies it. */
+  function editorSubtext() {
+    return $('#subtextInput').value.replace(/\s+/g, ' ').trim();
+  }
+
+  function updateSubtextCount() {
+    $('#subtextCount').textContent = $('#subtextInput').value.length;
+  }
+
+  async function openSubtextEditor() {
+    if (!await loadSubtext()) {
+      toast('Could not load the current subtext. Try again.', 'error');
+      return;
+    }
+    $('#subtextInput').value = savedSubtext;
+    updateSubtextCount();
+    $('#adminMain').classList.add('hidden');
+    $('#subtextEditor').classList.remove('hidden');
+    window.scrollTo(0, 0);
+  }
+
+  function closeSubtextEditor() {
+    $('#subtextEditor').classList.add('hidden');
+    $('#adminMain').classList.remove('hidden');
+  }
+
+  $('#subtextInput').addEventListener('input', updateSubtextCount);
+
+  $('#editSubtextBtn').addEventListener('click', async () => {
+    const confirmed = await confirmAction({
+      title: 'Edit the line counter subtext?',
+      message: 'You\'ll be able to change the note shown under the line counter on the home page.',
+      confirmLabel: 'Open Editor',
+    });
+    if (confirmed) openSubtextEditor();
+  });
+
+  $('#cancelSubtextBtn').addEventListener('click', async () => {
+    if (editorSubtext() !== savedSubtext) {
+      const discard = await confirmAction({
+        title: 'Discard your changes?',
+        message: 'The subtext will stay exactly as it is now.',
+        confirmLabel: 'Discard',
+        tone: 'danger',
+      });
+      if (!discard) return;
+    }
+    closeSubtextEditor();
+  });
+
+  $('#subtextForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const subtext = editorSubtext();
+    if (subtext === savedSubtext) { toast('No changes to save.'); closeSubtextEditor(); return; }
+    const confirmed = await confirmAction({
+      title: 'Publish this subtext?',
+      message: subtext
+        ? `Everyone will see this under the line counter:\n\n${subtext}`
+        : 'The subtext is blank, so the note under the line counter will be hidden.',
+      confirmLabel: 'Publish',
+    });
+    if (!confirmed) return;
+    await withBusy($('#saveSubtextBtn'), async () => {
+      try {
+        savedSubtext = (await api('api/subtext', 'PUT', { subtext })).subtext;
+        renderSubtextCurrent();
+        closeSubtextEditor();
+        toast('Subtext updated.', 'success');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+  });
+
+  // =====================================================================
+  // 7. Polling (only while logged in and the tab is visible)
   // =====================================================================
   let pollTimer = null;
 
-  /** One poll: the line and the urgent message (another officer may change either). */
-  function refresh() {
-    loadLine();
-    loadAnnouncement();
-  }
-
   function startPolling() {
     if (pollTimer || !state.isAdmin || document.hidden) return;
-    refresh();
-    pollTimer = setInterval(refresh, POLL_MS);
+    loadLine();
+    pollTimer = setInterval(loadLine, POLL_MS);
   }
 
   function stopPolling() {
@@ -673,7 +775,7 @@
   });
 
   // =====================================================================
-  // 7. Line rules editor
+  // 8. Line rules editor
   // =====================================================================
 
   async function loadRules() {

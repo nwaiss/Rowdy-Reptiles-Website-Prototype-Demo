@@ -208,7 +208,9 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
    its half. If the kicker comes back, drop it to 18svh / 6.5rem (mobile:
    see the 600px media query). */
 .hero-heading {
-  --mark-h: clamp(4.5rem, calc(26svh / var(--zoom-factor)), 9.5rem);
+  /* 20vw: the lockup is about 4x --mark-h wide, so this keeps "STUDENT
+     LINE" inside tablet and narrow-window widths. */
+  --mark-h: clamp(4.5rem, calc(min(26svh, 20vw) / var(--zoom-factor)), 9.5rem);
   display: flex;
   align-items: center;
   justify-content: center;

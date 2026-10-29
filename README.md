@@ -9,6 +9,10 @@ admin changes is saved to your browser's `localStorage` only, and nothing is sen
 anywhere.
 
 ## Try it
+Open it through `npm run serve` (or the GitHub Pages link), not by
+double-clicking the HTML files: browsers block the site's fonts on pages
+opened straight from disk.
+
 - **Public page:** the hero, an urgent notice (only while one is posted), the live line
   counter, the GroupMe / Instagram buttons and the line rules.
 - **Admin:** use the button in the footer (`admin.html`). The demo password is
@@ -24,7 +28,8 @@ anywhere.
   - undo either flag (two confirmations);
   - post, edit and take down an urgent message (it shows in red under the
     title, with the time it was posted or updated);
-  - change the GroupMe and Instagram links;
+  - change the GroupMe and Instagram links, and the note under the line
+    counter (each in its own editor, like the rules);
   - edit the line rules.
 
   Open the public page in a second tab to see changes there. Both tabs

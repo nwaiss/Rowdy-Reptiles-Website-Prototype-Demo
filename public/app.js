@@ -3,10 +3,15 @@
  * live, and shows the GroupMe / Instagram links and the rules.
  *
  * Talks to four read-only endpoints:
- *   GET /api/line          { active, count, label, bandsOut, updatedAt }
- *   GET /api/announcement  { announcement: { message, postedAt, updatedAt } | null }
- *   GET /api/links         { groupme, instagram }  ('' = not set)
- *   GET /api/rules         { rules: string[] }
+ *   GET /api/line     { active, count, label, bandsOut, updatedAt,
+ *                       announcement: { message, postedAt, updatedAt } | null }
+ *   GET /api/links    { groupme, instagram }  ('' = not set)
+ *   GET /api/subtext  { subtext }  the note under the counter ('' = hide)
+ *   GET /api/rules    { rules: string[] }
+ *
+ * The urgent notice rides along with the line count on purpose: one
+ * request per visitor per poll instead of two, which matters at
+ * game-day scale (thousands of phones polling every 10s).
  *
  * Polling pauses while the tab is hidden and catches up the moment it's
  * visible again. On game day thousands of phones have this page open in
@@ -29,6 +34,7 @@
     capacityNotice: document.getElementById('lineCapacityNotice'),
     note: document.getElementById('lineCounterNote'),
     rules: document.getElementById('rulesList'),
+    subtext: document.getElementById('lineSubtext'),
     noticeSection: document.getElementById('noticeSection'),
     noticeMessage: document.getElementById('noticeMessage'),
     noticeTime: document.getElementById('noticeTime'),
@@ -98,6 +104,7 @@
       els.count.classList.add('flash');
     }
     lastCount = line.active ? line.count : null;
+    renderNotice(line.announcement || null);
     els.label.textContent = line.active ? line.label : '';
     els.updated.textContent = line.active ? formatUpdated(line.updatedAt) : '';
 
@@ -133,7 +140,15 @@
     return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${time}`;
   }
 
+  /** updatedAt of the notice on screen, so an unchanged one isn't redrawn. */
+  let shownNotice = null;
+
   function renderNotice(notice) {
+    const key = notice ? notice.updatedAt : null;
+    // Redrawing identical text every poll would make screen readers
+    // re-announce it (the message is aria-live).
+    if (key === shownNotice) return;
+    shownNotice = key;
     els.noticeSection.classList.toggle('hidden', !notice);
     if (!notice) return;
     // textContent (with CSS keeping line breaks): officers type free text.
@@ -144,25 +159,13 @@
     els.noticeTime.title = `Posted ${new Date(notice.postedAt).toLocaleString()}`;
   }
 
-  async function loadNotice() {
-    try {
-      renderNotice((await getJson('/api/announcement')).announcement);
-    } catch { /* keep whatever is showing; the next poll retries */ }
-  }
-
   // ---------- Polling (pauses in background tabs) ----------
   let pollTimer = null;
 
-  /** One poll: the count and the notice are both live. */
-  function refresh() {
-    loadLine();
-    loadNotice();
-  }
-
   function startPolling() {
     if (pollTimer) return;
-    refresh();
-    pollTimer = setInterval(refresh, POLL_MS);
+    loadLine();
+    pollTimer = setInterval(loadLine, POLL_MS);
   }
 
   function stopPolling() {
@@ -194,13 +197,37 @@
     }
   }
 
+  // ---------- Line counter subtext ----------
+  // The note under the counter (the wristband reminder). Officers can edit
+  // it; blank hides it. The HTML holds the default until this loads.
+  async function loadSubtext() {
+    try {
+      const { subtext } = await getJson('/api/subtext');
+      els.subtext.textContent = subtext;
+      els.subtext.classList.toggle('hidden', !subtext);
+    } catch { /* keep the default text */ }
+  }
+
   // ---------- GroupMe / Instagram ----------
   // Officers can change both links; a blank one hides its button, and the
   // whole section hides if both are blank.
 
+  /**
+   * The link as a URL if it's a well-formed https:// address, else null.
+   * The server already checks this; checking again here means a bad value
+   * can never become a javascript: link, and can't break the section.
+   */
+  function httpsUrl(value) {
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' ? url : null;
+    } catch {
+      return null;
+    }
+  }
+
   /** "@ufrowdies" from an Instagram profile link, or '' if it isn't one. */
-  function instagramHandle(url) {
-    const { hostname, pathname } = new URL(url);
+  function instagramHandle({ hostname, pathname }) {
     const match = /^\/([A-Za-z0-9._]+)\/?$/.exec(pathname);
     return /(^|\.)instagram\.com$/i.test(hostname) && match ? `@${match[1]}` : '';
   }
@@ -208,20 +235,22 @@
   async function loadLinks() {
     try {
       const links = await getJson('/api/links');
-      els.groupme.classList.toggle('hidden', !links.groupme);
-      els.instagram.classList.toggle('hidden', !links.instagram);
-      if (links.groupme) {
-        els.groupme.href = links.groupme;
+      const groupme = httpsUrl(links.groupme);
+      const instagram = httpsUrl(links.instagram);
+      els.groupme.classList.toggle('hidden', !groupme);
+      els.instagram.classList.toggle('hidden', !instagram);
+      if (groupme) {
+        els.groupme.href = groupme.href;
         // The link itself, minus https:// and www., on the card's last line.
         // A <wbr> after each "/" lets a narrow card wrap it there, not mid-word.
-        const parts = links.groupme.replace(/^https:\/\/(www\.)?/, '').split(/(?<=\/)/);
+        const parts = groupme.href.replace(/^https:\/\/(www\.)?/, '').split(/(?<=\/)/);
         els.groupmeAddress.replaceChildren(...parts.flatMap((part) => [part, document.createElement('wbr')]));
       }
-      if (links.instagram) {
-        els.instagram.href = links.instagram;
-        els.instagramHandle.textContent = instagramHandle(links.instagram); // '' if not a profile link
+      if (instagram) {
+        els.instagram.href = instagram.href;
+        els.instagramHandle.textContent = instagramHandle(instagram); // '' if not a profile link
       }
-      els.socials.classList.toggle('hidden', !links.groupme && !links.instagram);
+      els.socials.classList.toggle('hidden', !groupme && !instagram);
     } catch {
       els.socials.classList.add('hidden');
     }
@@ -229,5 +258,6 @@
 
   loadRules();
   loadLinks();
+  loadSubtext();
   if (!document.hidden) startPolling();
 })();

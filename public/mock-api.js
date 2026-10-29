@@ -38,6 +38,7 @@
     sheet: 'rr_demo_sheet_v1', // the simulated Google Sheet (see below)
     announcement: 'rr_demo_announcement_v1',
     links: 'rr_demo_links_v1',
+    subtext: 'rr_demo_subtext_v1',
   };
 
   /** Public demo credential, also shown on the login form. */
@@ -101,6 +102,19 @@
       .split('\n').map((l) => l.replace(/[ \t]+/g, ' ').trim()).join('\n')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
+  }
+
+  // =====================================================================
+  // Line counter subtext (the note under the public counter)
+  // =====================================================================
+
+  const MAX_SUBTEXT_LENGTH = 300;
+  const DEFAULT_SUBTEXT = 'Only 500 wristbands are given out, even though the lower bowl seats 700 students — get here early to make sure you get one.';
+
+  /** The saved note, or the default. '' is a real value: it hides the note. */
+  function readSubtext() {
+    const saved = readJson(STORAGE.subtext, null);
+    return typeof saved === 'string' ? saved : DEFAULT_SUBTEXT;
   }
 
   // =====================================================================
@@ -283,6 +297,8 @@
       extra: line.extra,
       admitted: line.admitted,
       sheet: { configured: true, ok: true, error: null, readAt: sheet.readAt },
+      // Sent with every line response so pages get it without a second poll.
+      announcement: readAnnouncement(),
     };
   }
 
@@ -304,8 +320,8 @@
     // Public
     'GET line': () => adminView(),
     'GET rules': () => ({ rules: readRules() }),
-    'GET announcement': () => ({ announcement: readAnnouncement() }),
     'GET links': () => readLinks(),
+    'GET subtext': () => ({ subtext: readSubtext() }),
 
     // Session
     'GET session': () => ({ isAdmin: isAdmin() }),
@@ -390,6 +406,14 @@
       return { announcement: null };
     }),
 
+    // Line counter subtext
+    'PUT subtext': admin((body) => {
+      if (typeof body.subtext !== 'string') throw new ApiError('The subtext is missing.');
+      const subtext = body.subtext.replace(/\s+/g, ' ').trim();
+      if (subtext.length > MAX_SUBTEXT_LENGTH) throw new ApiError(`Keep the subtext under ${MAX_SUBTEXT_LENGTH} characters.`);
+      return { subtext: writeJson(STORAGE.subtext, subtext) };
+    }),
+
     // Links
     'PUT links': admin((body) => writeJson(STORAGE.links, {
       groupme: parseLink(body.groupme, 'GroupMe'),
@@ -451,7 +475,7 @@
   // Earlier versions of this demo used hash routes. Send old bookmarks to
   // the right place: #admin → admin.html, #line / #line-rules → their section.
   const hash = location.hash.replace(/^#/, '');
-  const onAdminPage = /admin\.html$/.test(location.pathname);
+  const onAdminPage = /\/admin(\.html)?$/.test(location.pathname); // "/admin" under clean-URL servers
   if (!onAdminPage && hash === 'admin') location.replace('admin.html');
   const SECTIONS = { line: 'lineCounter', 'line-rules': 'lineRules' };
   if (!onAdminPage && SECTIONS[hash]) location.replace(`#${SECTIONS[hash]}`);
