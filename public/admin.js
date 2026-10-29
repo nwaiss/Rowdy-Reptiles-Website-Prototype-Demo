@@ -189,7 +189,6 @@
     $('#adminLoggedOut').classList.add('hidden');
     $('#adminLoggedIn').classList.remove('hidden');
     loadRules();
-    loadSubtext();
     startPolling();
   }
 
@@ -657,22 +656,18 @@
   // =====================================================================
   // 6. Line counter subtext
   // =====================================================================
-  // The note under the public counter. Edited in its own view, like the
-  // rules, opened from "Edit Subtext" in the line section.
+  // The note under the public counter. Works exactly like the line rules:
+  // the dashboard only has a button, which (after a warning) opens a
+  // separate editor view; saving asks again before publishing.
 
   /** The subtext as currently published, for detecting unsaved edits. */
   let savedSubtext = '';
 
-  function renderSubtextCurrent() {
-    const el = $('#subtextCurrent');
-    el.textContent = savedSubtext || '(hidden: no subtext set)';
-    el.classList.toggle('empty', !savedSubtext);
-  }
-
   async function loadSubtext() {
     try {
+      // Public endpoint, never served stale (no-cache), so this always
+      // reflects another officer's latest save.
       savedSubtext = (await api('/api/subtext')).subtext;
-      renderSubtextCurrent();
       return true;
     } catch {
       return false;
@@ -710,7 +705,7 @@
   $('#editSubtextBtn').addEventListener('click', async () => {
     const confirmed = await confirmAction({
       title: 'Edit the line counter subtext?',
-      message: 'You\'ll be able to change the note shown under the line counter on the home page.',
+      message: 'You\'ll be able to change the official note shown under the line counter on the home page.',
       confirmLabel: 'Open Editor',
     });
     if (confirmed) openSubtextEditor();
@@ -720,7 +715,7 @@
     if (editorSubtext() !== savedSubtext) {
       const discard = await confirmAction({
         title: 'Discard your changes?',
-        message: 'The subtext will stay exactly as it is now.',
+        message: 'The line counter subtext will stay exactly as it is now.',
         confirmLabel: 'Discard',
         tone: 'danger',
       });
@@ -734,19 +729,18 @@
     const subtext = editorSubtext();
     if (subtext === savedSubtext) { toast('No changes to save.'); closeSubtextEditor(); return; }
     const confirmed = await confirmAction({
-      title: 'Publish this subtext?',
+      title: 'Publish as the official subtext?',
       message: subtext
-        ? `Everyone will see this under the line counter:\n\n${subtext}`
-        : 'The subtext is blank, so the note under the line counter will be hidden.',
+        ? 'Exactly what you typed will replace the current note under the line counter for everyone.\n\nDouble-check spelling and wording first.'
+        : 'The box is blank, so the note under the line counter will be hidden for everyone.\n\nDouble-check that this is what you want.',
       confirmLabel: 'Publish',
     });
     if (!confirmed) return;
     await withBusy($('#saveSubtextBtn'), async () => {
       try {
         savedSubtext = (await api('api/subtext', 'PUT', { subtext })).subtext;
-        renderSubtextCurrent();
         closeSubtextEditor();
-        toast('Subtext updated.', 'success');
+        toast('Line counter subtext updated.', 'success');
       } catch (err) {
         toast(err.message, 'error');
       }
