@@ -229,17 +229,7 @@
   border-top: 2px dashed rgba(10, 20, 66, 0.15);
 }
 .subtext-entry h3 { margin: 12px 0 4px; }
-.subtext-entry > p { margin: 0 0 10px; }
-.subtext-entry .subtext-current {
-  margin: 0 auto 12px;
-  max-width: 420px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  font-size: 0.9rem;
-  color: var(--text);
-}
-.subtext-entry .subtext-current.empty { color: var(--text-muted); font-style: italic; }
+.subtext-entry > p { margin: 0 0 12px; }
 
 /* Urgent message and GroupMe/Instagram links: same divider as Line Rules. */
 .admin-section {
