@@ -15,6 +15,10 @@ opened straight from disk.
 
 - **Public page:** the hero, an urgent notice (only while one is posted), the live line
   counter, the GroupMe / Instagram buttons and the line rules.
+- **Privacy and accessibility pages:** linked from the footer (`privacy.html`,
+  `accessibility.html`), along with the University of Florida links UF's web
+  standards ask for. The footer's contact email is hidden here because the demo
+  has no real address.
 - **Admin:** use the button in the footer (`admin.html`). The demo password is
   **`rowdydemo`**, also shown on the login form.
 - **Things to try:**

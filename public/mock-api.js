@@ -94,11 +94,17 @@
     return saved && typeof saved.message === 'string' && saved.message ? saved : null;
   }
 
+  // Mirrors lib/text.js: control, zero-width and direction-override
+  // characters are removed from anything an officer types.
+  // eslint-disable-next-line no-control-regex -- matching control characters is the point.
+  const UNSAFE_CHARS = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069\u200B\u2060\uFEFF]/g;
+  function stripUnsafeChars(text) { return text.normalize('NFC').replace(UNSAFE_CHARS, ''); }
+  function cleanLine(value) { return typeof value === 'string' ? stripUnsafeChars(value).replace(/\s+/g, ' ').trim() : ''; }
+
   /** Trims, keeps single line breaks (at most one blank line in a row). */
   function cleanMessage(value) {
     if (typeof value !== 'string') return '';
-    return value
-      .replace(/\r\n?/g, '\n')
+    return stripUnsafeChars(value.replace(/\r\n?/g, '\n'))
       .split('\n').map((l) => l.replace(/[ \t]+/g, ' ').trim()).join('\n')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
@@ -132,14 +138,21 @@
     return saved && typeof saved === 'object' ? { ...DEFAULT_LINKS, ...saved } : { ...DEFAULT_LINKS };
   }
 
-  /** '' (hides the button) or a full https:// link; anything else is refused. */
-  function parseLink(raw, name) {
+  /** Where each card may point (mirrors LINK_DOMAINS in lib/content-store.js). */
+  const LINK_DOMAINS = Object.freeze({ groupme: 'groupme.com', instagram: 'instagram.com' });
+
+  /** '' (hides the button) or a full https:// link on the card's own site; anything else is refused. */
+  function parseLink(raw, name, domain) {
     const value = typeof raw === 'string' ? raw.trim() : '';
     if (!value) return '';
     let url;
     try { url = new URL(value); } catch { throw new ApiError(`The ${name} link isn't a valid web address.`); }
     if (url.protocol !== 'https:') throw new ApiError(`The ${name} link must start with https://`);
     if (value.length > MAX_LINK_LENGTH) throw new ApiError(`The ${name} link is too long.`);
+    const host = url.hostname.toLowerCase();
+    if ((host !== domain && !host.endsWith(`.${domain}`)) || url.username || url.password || url.port) {
+      throw new ApiError(`The ${name} link must be a ${domain} address.`);
+    }
     return url.href;
   }
 
@@ -158,7 +171,7 @@
   function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
 
   function cleanText(value, maxLength) {
-    return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, maxLength) : '';
+    return cleanLine(value).slice(0, maxLength);
   }
 
   function parseWholeNumber(raw) {
@@ -320,7 +333,9 @@
     // Public
     'GET line': () => adminView(),
     'GET rules': () => ({ rules: readRules() }),
-    'GET links': () => readLinks(),
+    // The real server adds its CONTACT_EMAIL here for the footer. The demo
+    // has no real contact address, so the footer contact stays hidden.
+    'GET links': () => ({ ...readLinks(), email: '' }),
     'GET subtext': () => ({ subtext: readSubtext() }),
 
     // Session
@@ -409,15 +424,15 @@
     // Line counter subtext
     'PUT subtext': admin((body) => {
       if (typeof body.subtext !== 'string') throw new ApiError('The subtext is missing.');
-      const subtext = body.subtext.replace(/\s+/g, ' ').trim();
+      const subtext = cleanLine(body.subtext);
       if (subtext.length > MAX_SUBTEXT_LENGTH) throw new ApiError(`Keep the subtext under ${MAX_SUBTEXT_LENGTH} characters.`);
       return { subtext: writeJson(STORAGE.subtext, subtext) };
     }),
 
     // Links
     'PUT links': admin((body) => writeJson(STORAGE.links, {
-      groupme: parseLink(body.groupme, 'GroupMe'),
-      instagram: parseLink(body.instagram, 'Instagram'),
+      groupme: parseLink(body.groupme, 'GroupMe', LINK_DOMAINS.groupme),
+      instagram: parseLink(body.instagram, 'Instagram', LINK_DOMAINS.instagram),
     })),
 
     // Rules

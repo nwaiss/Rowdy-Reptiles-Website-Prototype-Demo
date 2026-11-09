@@ -785,21 +785,41 @@
     }
   }
 
-  /** Builds one editable rule row. The text goes in via .value, never as HTML. */
+  /**
+   * Creates an element with a class and optional text.
+   * @param {string} tag
+   * @param {string} className
+   * @param {string} [text]
+   */
+  function createEl(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  /**
+   * Builds one editable rule row from DOM calls (never an HTML string: the
+   * site's Content-Security-Policy makes browsers refuse innerHTML). The
+   * rule text goes in via .value.
+   */
   function ruleEditorItem(text) {
-    const li = document.createElement('li');
-    li.className = 'rule-edit-item';
-    li.innerHTML = `
-      <div class="rule-edit-head">
-        <span class="rule-edit-num"></span>
-        <div class="rule-edit-tools">
-          <button type="button" class="rule-tool" data-action="up">&uarr; Up</button>
-          <button type="button" class="rule-tool" data-action="down">&darr; Down</button>
-          <button type="button" class="rule-tool rule-tool-remove" data-action="remove">Remove</button>
-        </div>
-      </div>
-      <textarea rows="3" maxlength="500"></textarea>`;
-    li.querySelector('textarea').value = text;
+    const tool = (action, label, extraClass) => {
+      const button = createEl('button', `rule-tool${extraClass ? ` ${extraClass}` : ''}`, label);
+      button.type = 'button';
+      button.dataset.action = action;
+      return button;
+    };
+    const tools = createEl('div', 'rule-edit-tools');
+    tools.append(tool('up', '↑ Up'), tool('down', '↓ Down'), tool('remove', 'Remove', 'rule-tool-remove'));
+    const head = createEl('div', 'rule-edit-head');
+    head.append(createEl('span', 'rule-edit-num'), tools);
+    const textarea = createEl('textarea');
+    textarea.rows = 3;
+    textarea.maxLength = 500;
+    textarea.value = text;
+    const li = createEl('li', 'rule-edit-item');
+    li.append(head, textarea);
     return li;
   }
 

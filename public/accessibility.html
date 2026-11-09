@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Accessibility — Rowdy Reptiles at UF</title>
+  <meta name="description" content="Accessibility statement for the Rowdy Reptiles Student Line Manager." />
+  <link rel="icon" href="logo.png" />
+  <link rel="preload" href="fonts/Graduate-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- Only claim what has really been checked. Update the date and the
+       "How it's checked" list after each accessibility review. -->
+  <main id="main" class="info-page">
+    <a href="index.html">&larr; Back to the line counter</a>
+    <h1>Accessibility</h1>
+    <p class="muted">Last reviewed November 9, 2026</p>
+
+    <p>Everyone should be able to check the line and read the rules, on any device and with any assistive technology. This site aims to meet the <a href="https://www.w3.org/TR/WCAG21/">Web Content Accessibility Guidelines (WCAG) 2.1, Level AA</a>, the standard used by the University of Florida and by the U.S. Department of Justice's rule for public institutions' websites.</p>
+
+    <h2>What we do</h2>
+    <ul>
+      <li>Every page works with a keyboard alone, with visible focus and a "Skip to content" link.</li>
+      <li>Screen readers announce changes to the line count and urgent notices as they happen.</li>
+      <li>Text and controls meet WCAG color-contrast requirements, and color is never the only way information is shown.</li>
+      <li>Pages zoom and reflow to small screens without losing content.</li>
+      <li>Images have text alternatives, and decorative graphics are hidden from screen readers.</li>
+      <li>If your device asks for reduced motion, the counter's animations are turned off.</li>
+      <li>The page doesn't time out, flash, or play sound.</li>
+    </ul>
+
+    <h2>How it's checked</h2>
+    <p>Every page is tested with the open-source axe accessibility engine against WCAG 2.1 A and AA rules, on phone and desktop screen sizes, and checked with keyboard-only use.</p>
+
+    <h2>Tell us about a problem</h2>
+    <p>If something on this site is hard to use, please let us know and we'll fix it. <span id="contactSentence" class="hidden">Email the club at <a id="contactEmail" href="#"></a>. </span>Students can also get help from the <a href="https://disability.ufl.edu/">UF Disability Resource Center</a>, and the university's accessibility resources are at <a href="https://accessibility.ufl.edu/">accessibility.ufl.edu</a>.</p>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 2026 Rowdy Reptiles at the University of Florida. Run by the club; not an official University of Florida website.</p>
+    <nav class="footer-links" aria-label="About this site">
+      <a href="privacy.html">Privacy</a>
+      <a href="accessibility.html" aria-current="page">Accessibility</a>
+      <a id="footerContact" class="hidden" href="#">Contact</a>
+      <a href="https://www.ufl.edu/">University of Florida</a>
+      <a href="https://privacy.ufl.edu/policies/onlineinternet-privacy-policy-/">UF Privacy Statement</a>
+      <a href="https://disability.ufl.edu/">UF Disability Resources</a>
+    </nav>
+    <!-- Demo only: the real site has no admin link anywhere (its dashboard
+         lives at a secret URL). Reviewers need a way in, so it's here. -->
+    <a href="admin.html" class="footer-admin-btn">Admin</a>
+  </footer>
+
+  <script src="mock-api.js"></script>
+  <script src="info-page.js"></script>
+</body>
+</html>

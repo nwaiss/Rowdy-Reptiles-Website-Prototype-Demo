@@ -3,8 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rowdy Reptiles — UF Gators Hype Squad</title>
-  <meta name="description" content="Rowdy Reptiles is the official hype squad for the Florida Gators student section: line rules and live game-day line counts." />
+  <!-- Wording follows UF's student organization trademark rules: "at the
+       University of Florida" after the club's name is allowed; "Florida
+       Gators" together, or "UF's ..." before it, is not. -->
+  <title>Rowdy Reptiles at UF — Student Line Manager</title>
+  <meta name="description" content="Rowdy Reptiles at the University of Florida: live game-day student line counts and the official line rules." />
   <link rel="icon" href="logo.png" />
   <!-- Preload the display font so headings don't visibly jump when it
        replaces the fallback font. -->
@@ -36,7 +39,7 @@
             <img class="wordmark" src="logo-wordmark.png" alt="Rowdy Reptiles" width="848" height="585" />
             <span class="hero-title">Student Line<br>Manager</span>
           </h1>
-          <p class="tagline">The official hype squad for the Florida Gators student section.</p>
+          <p class="tagline">The student section hype squad at the University of Florida.</p>
         </div>
       </div>
 
@@ -94,6 +97,7 @@
             </span>
             <span class="social-btn-sub">Have a question? Message our officers directly and get an answer.</span>
             <span id="groupmeAddress" class="social-btn-foot"></span>
+            <span class="sr-only"> (opens GroupMe in a new tab)</span>
           </a>
           <a id="instagramLink" class="social-btn social-instagram hidden" target="_blank" rel="noopener noreferrer">
             <span class="social-btn-top">
@@ -107,6 +111,7 @@
             </span>
             <span class="social-btn-sub">The best way to get updates and content from the Rowdy Reptiles.</span>
             <span id="instagramHandle" class="social-btn-foot"></span>
+            <span class="sr-only"> (opens Instagram in a new tab)</span>
           </a>
         </div>
       </div>
@@ -123,8 +128,19 @@
     </section>
   </main>
 
+  <!-- Same footer on every public page. The links are the ones UF's web
+       standards ask for (UF home, privacy, accessibility, a contact). The
+       contact email comes from /api/links and stays hidden until set. -->
   <footer class="site-footer">
-    <p>&copy; 2026 Rowdy Reptiles — UF Gators student section hype squad.</p>
+    <p>&copy; 2026 Rowdy Reptiles at the University of Florida. Run by the club; not an official University of Florida website.</p>
+    <nav class="footer-links" aria-label="About this site">
+      <a href="privacy.html">Privacy</a>
+      <a href="accessibility.html">Accessibility</a>
+      <a id="footerContact" class="hidden" href="#">Contact</a>
+      <a href="https://www.ufl.edu/">University of Florida</a>
+      <a href="https://privacy.ufl.edu/policies/onlineinternet-privacy-policy-/">UF Privacy Statement</a>
+      <a href="https://disability.ufl.edu/">UF Disability Resources</a>
+    </nav>
     <!-- Demo only: the real site has no admin link anywhere (its dashboard
          lives at a secret URL). Reviewers need a way in, so it's here. -->
     <a href="admin.html" class="footer-admin-btn">Admin</a>

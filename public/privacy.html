@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Privacy — Rowdy Reptiles at UF</title>
+  <meta name="description" content="What the Rowdy Reptiles Student Line Manager does and doesn't collect." />
+  <link rel="icon" href="logo.png" />
+  <link rel="preload" href="fonts/Graduate-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- Keep this page true to what the code does. If the site starts
+       collecting anything new (analytics, forms, cookies), update it. -->
+  <main id="main" class="info-page">
+    <a href="index.html">&larr; Back to the line counter</a>
+    <h1>Privacy</h1>
+    <p class="muted">Last updated November 9, 2026</p>
+
+    <p>This site shows the live game-day student line count and the line rules for Rowdy Reptiles, a student organization at the University of Florida. It is built to collect as little as possible.</p>
+
+    <h2>What we don't collect</h2>
+    <ul>
+      <li>No accounts and no sign-up: you never enter anything on this site.</li>
+      <li>No cookies are set for visitors.</li>
+      <li>No analytics, advertising or tracking of any kind.</li>
+      <li>No third-party content: fonts and images come from this site, not from other companies.</li>
+    </ul>
+
+    <h2>What happens when you visit</h2>
+    <p>While this page is open, your browser asks our server for the current line count every 10 seconds (it stops while the tab is in the background). Like almost every website, the server that hosts this site may keep short-term technical logs (such as IP address, time and page requested) to keep the site secure and working. We don't use them to identify or follow visitors.</p>
+
+    <h2>Joining the line</h2>
+    <p>Signing up for the line happens through the club's Google Form, which is run by Google under <a href="https://policies.google.com/privacy">Google's privacy policy</a>. This website never reads names or any other details from those sign-ups. It only reads one number: the total count of people in line.</p>
+
+    <h2>Club officers</h2>
+    <p>Club officers who update the line count sign in with a password. That sign-in uses a single cookie that is needed to keep them signed in. Visitors never receive it. Officer sign-ins and changes are logged so that mistakes can be traced and corrected.</p>
+
+    <h2>Links to other sites</h2>
+    <p>The GroupMe and Instagram buttons take you to those services, which have their own privacy policies. This site shares nothing with them, and it tells your browser not to send them the address of the page you came from.</p>
+
+    <h2>Questions</h2>
+    <p><span id="contactSentence" class="hidden">Email the club at <a id="contactEmail" href="#"></a>. </span>You can also read the <a href="https://privacy.ufl.edu/policies/onlineinternet-privacy-policy-/">University of Florida's online privacy statement</a>.</p>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 2026 Rowdy Reptiles at the University of Florida. Run by the club; not an official University of Florida website.</p>
+    <nav class="footer-links" aria-label="About this site">
+      <a href="privacy.html" aria-current="page">Privacy</a>
+      <a href="accessibility.html">Accessibility</a>
+      <a id="footerContact" class="hidden" href="#">Contact</a>
+      <a href="https://www.ufl.edu/">University of Florida</a>
+      <a href="https://privacy.ufl.edu/policies/onlineinternet-privacy-policy-/">UF Privacy Statement</a>
+      <a href="https://disability.ufl.edu/">UF Disability Resources</a>
+    </nav>
+    <!-- Demo only: the real site has no admin link anywhere (its dashboard
+         lives at a secret URL). Reviewers need a way in, so it's here. -->
+    <a href="admin.html" class="footer-admin-btn">Admin</a>
+  </footer>
+
+  <script src="mock-api.js"></script>
+  <script src="info-page.js"></script>
+</body>
+</html>

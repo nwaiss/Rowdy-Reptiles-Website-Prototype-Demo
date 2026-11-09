@@ -5,7 +5,7 @@
  * Talks to four read-only endpoints:
  *   GET /api/line     { active, count, label, bandsOut, updatedAt,
  *                       announcement: { message, postedAt, updatedAt } | null }
- *   GET /api/links    { groupme, instagram }  ('' = not set)
+ *   GET /api/links    { groupme, instagram, email }  ('' = not set)
  *   GET /api/subtext  { subtext }  the note under the counter ('' = hide)
  *   GET /api/rules    { rules: string[] }
  *
@@ -43,6 +43,7 @@
     instagram: document.getElementById('instagramLink'),
     instagramHandle: document.getElementById('instagramHandle'),
     groupmeAddress: document.getElementById('groupmeAddress'),
+    footerContact: document.getElementById('footerContact'),
   };
 
   /**
@@ -251,9 +252,22 @@
         els.instagramHandle.textContent = instagramHandle(instagram); // '' if not a profile link
       }
       els.socials.classList.toggle('hidden', !groupme && !instagram);
+      showContact(links.email);
     } catch {
       els.socials.classList.add('hidden');
     }
+  }
+
+  // ---------- Footer contact ----------
+
+  /** Shows the club's contact address in the footer ('' keeps it hidden). */
+  function showContact(email) {
+    // The server only sends a plain address; this re-check keeps anything
+    // else out of the mailto: link.
+    if (typeof email !== 'string' || !/^[^\s@<>"]+@[^\s@<>"]+$/.test(email)) return;
+    els.footerContact.href = `mailto:${email}`;
+    els.footerContact.textContent = `Contact: ${email}`;
+    els.footerContact.classList.remove('hidden');
   }
 
   loadRules();

@@ -75,6 +75,19 @@
 /* Bumps every rem-based size (headings, body copy, buttons, the scoreboard)
    up together instead of hand-tuning each one. */
 html { font-size: 18px; }
+/* Demo only: the footer Admin button (the real site has no admin link). */
+.footer-admin-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--navy);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background-color 0.15s ease;
+}
+.footer-admin-btn:hover { background: var(--surface-alt); }
+
 @media (max-width: 600px) { html { font-size: 16px; } }
 /* Desktop only: a true browser-zoom-style scale-up (not just bigger fonts —
    spacing, cards, the scoreboard, everything grows together) so the page
@@ -568,8 +581,11 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
 .scoreboard.admitted .line-label,
 .scoreboard.admitted .scoreboard-caption,
 .scoreboard.admitted .capacity-notice { color: var(--navy-deep); }
-.scoreboard.admitted .muted { color: rgba(10, 20, 66, 0.75); }
-.scoreboard.admitted .line-badge { background: rgba(10, 20, 66, 0.14); color: var(--navy-deep); }
+/* Small text on gator orange needs full-strength navy to reach WCAG's
+   4.5:1 (5.0:1 here), and the badge sits on a light tint (6.5:1); the
+   earlier faded navy and darkened badge measured about 3.9:1. */
+.scoreboard.admitted .muted { color: var(--navy-deep); }
+.scoreboard.admitted .line-badge { background: rgba(255, 255, 255, 0.25); color: var(--navy-deep); }
 .scoreboard.admitted .line-badge.active::before { background: var(--gator-blue); box-shadow: none; }
 
 
@@ -586,18 +602,20 @@ h3 { font-size: 1.4rem; letter-spacing: 0.03em; }
   flex-wrap: wrap;
 }
 .site-footer p { margin: 0; }
-/* Demo only: the footer Admin button (the real site has no admin link). */
-.footer-admin-btn {
-  padding: 6px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--navy);
-  font-family: var(--font-display);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  transition: background-color 0.15s ease;
-}
-.footer-admin-btn:hover { background: var(--surface-alt); }
+.footer-links { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.footer-links a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
+.footer-links a:hover { color: var(--orange-dark); }
+
+/* ---------- Privacy / accessibility pages ----------
+   Plain reading pages: one column of text in the site's colors. */
+.info-page { max-width: 70ch; margin: 0 auto; padding: 32px 24px 48px; line-height: 1.6; }
+.info-page h1 { font-size: 2.2rem; margin: 16px 0 8px; }
+.info-page h2 { font-size: 1.3rem; margin: 28px 0 8px; }
+/* Navy, not the site's orange: orange text on this background is below the
+   4.5:1 contrast WCAG asks for body-size text. */
+.info-page a { color: var(--navy); text-decoration: underline; text-underline-offset: 2px; }
+.info-page ul { padding-left: 1.25rem; }
+.info-page li { margin: 4px 0; }
 
 @media (max-width: 600px) {
   h1 { font-size: 3rem; }
